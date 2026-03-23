@@ -62,6 +62,18 @@ SQLAlchemy models and domain entities are always separate classes connected by m
 **Completed:**
 - Phase 0 — uv init, pyproject.toml, folder structure,
   Dockerfile, docker-compose, GitHub Actions CI, README
+- Value Objects: BookingId, BookingStatus, TimeSlot, Email
+- Domain Events: BookingCreated, BookingCancelled
+- Domain Exceptions: DomainException base, BookingConflictError, 
+  SpaceNotFoundError, UserNotFoundError, BookingNotFoundError,
+  UnauthorizedError, InvalidTimeSlotError, InvalidBookingStatusFilterError
+- Entities: Booking, Space, User
+- Ports: BookingRepository, SpaceRepository, UserRepository, NotificationService
+- DTOs: booking_dtos.py (CreateBookingDTO, CancelBookingDTO, 
+  GetAvailabilityDTO, ListUserBookingsDTO, ConfirmBookingDTO,
+  BookingResponseDTO, AvailabilityResponseDTO)
+- Use Cases: CreateBooking, CancelBooking, GetAvailability, 
+  ListUserBookings, ConfirmBooking
 
 **Working on now:** —
 **Pending in this phase:**

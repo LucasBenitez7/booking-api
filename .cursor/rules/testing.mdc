@@ -20,11 +20,19 @@ No mocks, no DB, no HTTP. Domain logic only.
 Test the entity/value object behavior directly.
 
 ```python
-# Correct — pure domain test
+from datetime import UTC, datetime
+
+# Correct — pure domain test (TimeSlot requires timezone-aware datetimes)
 def test_time_slot_detects_overlap() -> None:
-    slot_a = TimeSlot(start=datetime(2024, 1, 1, 9), end=datetime(2024, 1, 1, 11))
-    slot_b = TimeSlot(start=datetime(2024, 1, 1, 10), end=datetime(2024, 1, 1, 12))
-    assert slot_a.overlaps_with(slot_b) is True
+    slot_a = TimeSlot(
+        start=datetime(2099, 6, 1, 9, tzinfo=UTC),
+        end=datetime(2099, 6, 1, 11, tzinfo=UTC),
+    )
+    slot_b = TimeSlot(
+        start=datetime(2099, 6, 1, 10, tzinfo=UTC),
+        end=datetime(2099, 6, 1, 12, tzinfo=UTC),
+    )
+    assert slot_a.overlaps(slot_b) is True
 ```
 
 # Unit tests — application layer
@@ -32,13 +40,16 @@ Use pytest-mock to mock domain ports (repositories, notification service).
 Never mock domain entities or value objects.
 
 ```python
+from booking.application.dtos.booking_dtos import CreateBookingDTO
+
 # Correct — use case test with mocked repo
 async def test_create_booking_saves_to_repository(
     mock_booking_repo: MagicMock,
     mock_notification_service: MagicMock,
+    dto: CreateBookingDTO,
 ) -> None:
     use_case = CreateBookingUseCase(mock_booking_repo, mock_notification_service)
-    await use_case.execute(create_booking_dto)
+    await use_case.execute(dto)
     mock_booking_repo.save.assert_called_once()
 ```
 
