@@ -1,0 +1,104 @@
+---
+description: Testing rules for BookingAPI — active when editing test files
+globs: ["tests/**/*.py", "**/conftest.py"]
+alwaysApply: false
+---
+
+# Testing stack
+pytest · pytest-asyncio · httpx · factory-boy · Faker · pytest-mock · pytest-cov
+Coverage target: 0% minimum.
+
+# Test structure — mirrors src/ structure exactly
+tests/
+  unit/
+    domain/       → pure logic tests, zero mocks, zero DB
+    application/  → use case tests, repos mocked via pytest-mock
+  integration/    → full HTTP tests against real test DB + Redis
+
+# Unit tests — domain layer
+No mocks, no DB, no HTTP. Domain logic only.
+Test the entity/value object behavior directly.
+
+```python
+from datetime import UTC, datetime
+
+# Correct — pure domain test (TimeSlot requires timezone-aware datetimes)
+def test_time_slot_detects_overlap() -> None:
+    slot_a = TimeSlot(
+        start=datetime(2099, 6, 1, 9, tzinfo=UTC),
+        end=datetime(2099, 6, 1, 11, tzinfo=UTC),
+    )
+    slot_b = TimeSlot(
+        start=datetime(2099, 6, 1, 10, tzinfo=UTC),
+        end=datetime(2099, 6, 1, 12, tzinfo=UTC),
+    )
+    assert slot_a.overlaps(slot_b) is True
+```
+
+# Unit tests — application layer
+Use pytest-mock to mock domain ports (repositories, notification service).
+Never mock domain entities or value objects.
+
+```python
+from booking.application.dtos.booking_dtos import CreateBookingDTO
+
+# Correct — use case test with mocked repo
+async def test_create_booking_saves_to_repository(
+    mock_booking_repo: MagicMock,
+    mock_notification_service: MagicMock,
+    dto: CreateBookingDTO,
+) -> None:
+    use_case = CreateBookingUseCase(mock_booking_repo, mock_notification_service)
+    await use_case.execute(dto)
+    mock_booking_repo.save.assert_called_once()
+```
+
+# Integration tests
+Use a real PostgreSQL test database (never production).
+Use httpx AsyncClient against the FastAPI app.
+Every test must be isolated — clean DB state before each test.
+
+```python
+# Correct — integration test with real DB
+async def test_create_booking_endpoint(
+    client: AsyncClient,
+    db_session: AsyncSession,
+) -> None:
+    response = await client.post("/bookings", json={...})
+    assert response.status_code == 201
+```
+
+# conftest.py conventions
+Global fixtures in tests/conftest.py:
+- `client` → httpx AsyncClient with the FastAPI app
+- `db_session` → async SQLAlchemy session against test DB, rolls back after each test
+- `override_dependencies` → replaces FastAPI DI with test versions
+
+Use factory-boy + Faker for realistic test data, never hardcode values.
+
+# AAA pattern — always
+Every test follows Arrange / Act / Assert with a blank line between sections.
+
+```python
+async def test_cancel_booking_changes_status(booking_factory: BookingFactory) -> None:
+    # Arrange
+    booking = booking_factory.create(status=BookingStatus.CONFIRMED)
+
+    # Act
+    booking.cancel()
+
+    # Assert
+    assert booking.status == BookingStatus.CANCELLED
+```
+
+# Naming
+- Test files: test_<what_is_being_tested>.py
+- Test functions: test_<action>_<expected_result>
+- No docstrings in tests — the name must be descriptive enough
+
+# What always needs a test
+- Every domain entity method with logic
+- Every value object with validation
+- Every use case (happy path + main error cases)
+- Every API endpoint (201/200 + 400 + 401 + 404 where applicable)
+- Every repository method (integration)
