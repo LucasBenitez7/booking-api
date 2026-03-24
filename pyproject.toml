@@ -17,6 +17,7 @@ dependencies = [
     "passlib[bcrypt]>=1.7.4",
     "slowapi>=0.1.9",
     "structlog>=24.0.0",
+    "python-dotenv>=1.2.2",
 ]
 
 [project.optional-dependencies]
@@ -53,6 +54,7 @@ select = [
     "UP", # pyupgrade
 ]
 ignore = ["E501", "B008", "B904"]
+per-file-ignores = {"alembic/env.py" = ["E402"], "alembic/versions/*.py" = ["E402", "I001", "UP007", "UP035", "W291"]}
 
 [tool.ruff.lint.isort]
 known-first-party = ["booking"]
@@ -60,7 +62,7 @@ known-first-party = ["booking"]
 [tool.mypy]
 python_version = "3.12"
 strict = true
-exclude = ["alembic/"]
+exclude = ["alembic/", "scripts/"]
 plugins = ["pydantic.mypy"]
 
 [[tool.mypy.overrides]]
