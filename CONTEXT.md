@@ -53,7 +53,7 @@ SQLAlchemy models and domain entities are always separate classes connected by m
 - [x] Phase 2 — Database infrastructure (SQLAlchemy repos, Alembic migrations)
 - [x] Phase 2b — Domain business rules (Space constraints, UpdateBooking, admin powers)
 - [x] Phase 3 — HTTP API and authentication (FastAPI routes, JWT, middleware, password reset via email token)
-- [ ] Phase 4 — Cache and async workers (Redis availability cache, Celery tasks)
+- [x] Phase 4 — Cache and async workers (Redis availability cache, Celery tasks)
 - [ ] Phase 5 — Kubernetes deployment (k3s, HPA, GitHub Actions deploy + release tagging)
 - [ ] Phase 6 — Polish, documentation and release (README, ADRs, coverage badge, release-please)
 
@@ -110,11 +110,17 @@ SQLAlchemy models and domain entities are always separate classes connected by m
   - BookingRepository: `find_all`, `count_active_by_user`
   - Integration tests: `/health`, `/health/ready` (HTTP); 70 tests total — Ruff clean — mypy strict clean
 
-**Working on now:** Phase 4 — Cache and async workers
+- Phase 4 — Cache and async workers:
+  - Port `AvailabilityCache` (domain) + `RedisAvailabilityCache` + `MemoryAvailabilityCache` (infrastructure)
+  - `GetAvailabilityUseCase` checks cache first (TTL 5min), stores result on miss
+  - `CreateBookingUseCase`, `UpdateBookingUseCase`, `CancelBookingUseCase` invalidate cache on mutation
+  - Celery app (`celery_app.py`) with JSON serializer, UTC timezone, single-prefetch
+  - Tasks: `send_booking_confirmation`, `send_booking_reminders`, `cleanup_expired_bookings` (with retry logic)
+  - Beat schedule: reminders every hour, cleanup every 30 minutes
+  - `MemoryAvailabilityCache` fallback when Redis not configured (respects TTL via `time.monotonic`)
+  - Tests: 76 passing — Ruff clean — mypy strict clean
 
-**Pending in Phase 4:**
-- Redis availability cache (TTL 5min, invalidated on create/update/cancel booking)
-- Celery tasks: send_confirmation, send_reminder, cleanup_expired
+**Working on now:** Phase 5 — Kubernetes deployment
 
 **Pending in Phase 5:**
 - K8s manifests: Deployment, HPA, Service, Ingress, ConfigMap, Secret, NetworkPolicy

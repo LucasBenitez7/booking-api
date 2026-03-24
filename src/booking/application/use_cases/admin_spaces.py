@@ -30,31 +30,19 @@ class UpdateSpaceUseCase:
         space = await self._space_repo.find_by_id(space_id)
         if space is None:
             raise SpaceNotFoundError(dto.space_id)
-        if dto.name is not None:
-            space.name = dto.name
-        if dto.description is not None:
-            space.description = dto.description
-        if dto.capacity is not None:
-            space.capacity = dto.capacity
-        if dto.price_per_hour is not None:
-            space.price_per_hour = dto.price_per_hour
-        if dto.min_duration_minutes is not None:
-            space.min_duration_minutes = dto.min_duration_minutes
-        if dto.max_duration_minutes is not None:
-            space.max_duration_minutes = dto.max_duration_minutes
-        if dto.min_advance_minutes is not None:
-            space.min_advance_minutes = dto.min_advance_minutes
-        if dto.cancellation_deadline_hours is not None:
-            space.cancellation_deadline_hours = dto.cancellation_deadline_hours
-        if dto.opening_time is not None:
-            space.opening_time = dto.opening_time
-        if dto.closing_time is not None:
-            space.closing_time = dto.closing_time
-        if dto.is_active is not None:
-            if dto.is_active:
-                space.activate()
-            else:
-                space.deactivate()
+        space.update(
+            name=dto.name,
+            description=dto.description,
+            capacity=dto.capacity,
+            price_per_hour=dto.price_per_hour,
+            min_duration_minutes=dto.min_duration_minutes,
+            max_duration_minutes=dto.max_duration_minutes,
+            min_advance_minutes=dto.min_advance_minutes,
+            cancellation_deadline_hours=dto.cancellation_deadline_hours,
+            opening_time=dto.opening_time,
+            closing_time=dto.closing_time,
+            is_active=dto.is_active,
+        )
         await self._space_repo.update(space)
         return space
 

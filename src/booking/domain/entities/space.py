@@ -36,6 +36,46 @@ class Space:
         if self.opening_time >= self.closing_time:
             raise ValueError("opening_time must be before closing_time")
 
+    def update(
+        self,
+        name: str | None = None,
+        description: str | None = None,
+        capacity: int | None = None,
+        price_per_hour: float | None = None,
+        min_duration_minutes: int | None = None,
+        max_duration_minutes: int | None = None,
+        min_advance_minutes: int | None = None,
+        cancellation_deadline_hours: int | None = None,
+        opening_time: time | None = None,
+        closing_time: time | None = None,
+        is_active: bool | None = None,
+    ) -> None:
+        """Apply partial updates and re-validate all invariants."""
+        if name is not None:
+            self.name = name
+        if description is not None:
+            self.description = description
+        if capacity is not None:
+            self.capacity = capacity
+        if price_per_hour is not None:
+            self.price_per_hour = price_per_hour
+        if min_duration_minutes is not None:
+            self.min_duration_minutes = min_duration_minutes
+        if max_duration_minutes is not None:
+            self.max_duration_minutes = max_duration_minutes
+        if min_advance_minutes is not None:
+            self.min_advance_minutes = min_advance_minutes
+        if cancellation_deadline_hours is not None:
+            self.cancellation_deadline_hours = cancellation_deadline_hours
+        if opening_time is not None:
+            self.opening_time = opening_time
+        if closing_time is not None:
+            self.closing_time = closing_time
+        if is_active is not None:
+            self.is_active = is_active
+        # Re-run invariant checks so the entity can never be left in an invalid state
+        self.__post_init__()
+
     def deactivate(self) -> None:
         self.is_active = False
 

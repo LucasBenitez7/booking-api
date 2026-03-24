@@ -19,6 +19,8 @@ _session_factory: Any = None
 
 def init_db(database_url: str, pool_size: int = 10, max_overflow: int = 20) -> None:
     global _engine, _session_factory
+    if _engine is not None:
+        return  # already initialised — safe to call multiple times
     _engine = create_async_engine(
         database_url,
         pool_size=pool_size,
