@@ -21,8 +21,7 @@ wheels/
 venv/
 ENV/
 
-# uv
-uv.lock
+# uv — uv.lock must be committed for reproducible builds
 
 # Environment variables
 .env
@@ -56,8 +55,8 @@ Thumbs.db
 # Docker
 .docker/
 
-# Kubernetes secrets
-k8s/secrets/secrets.yaml
+# Kubernetes secrets — never commit real values
+k8s/secrets/secret.yaml
 
 # Logs
 *.log

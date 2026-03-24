@@ -80,11 +80,22 @@ ignore_errors = true
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests"]
-addopts = "--cov=src --cov-report=term-missing --cov-fail-under=0"
+addopts = "--cov=src/booking --cov-report=term-missing --cov-fail-under=80"
 
 [tool.coverage.run]
 source = ["src"]
-omit = ["*/migrations/*", "*/alembic/*"]
+omit = [
+    "*/migrations/*",
+    "*/alembic/*",
+    # HTTP layer — covered by integration / E2E tests, not unit tests
+    "*/booking/api/*",
+    # DB adapters — require a real database session
+    "*/booking/infrastructure/persistence/*",
+    # Celery — exercised in staging / worker process
+    "*/booking/infrastructure/workers/*",
+    # Redis adapter — requires a running Redis (memory cache is unit-tested)
+    "*/booking/infrastructure/cache/redis_availability_cache.py",
+]
 
 [tool.bandit]
 exclude_dirs = ["tests", "alembic"]

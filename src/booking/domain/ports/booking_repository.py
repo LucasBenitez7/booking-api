@@ -22,14 +22,16 @@ class BookingRepository(Protocol):
         space_id: BookingId,
         time_slot: TimeSlot,
         exclude_booking_id: BookingId | None = None,
-    ) -> list[Booking]: ...
+    ) -> list[Booking]:
+        """Return bookings that overlap with time_slot, excluding CANCELLED and EXPIRED."""
+        ...
 
     async def update(self, booking: Booking) -> None: ...
 
     async def find_all(
         self,
         status: BookingStatus | None = None,
-        limit: int = 500,
+        limit: int = 500,  # safety cap — full pagination is a future concern
         offset: int = 0,
     ) -> list[Booking]: ...
 
