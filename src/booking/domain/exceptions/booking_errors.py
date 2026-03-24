@@ -49,3 +49,19 @@ class UnauthorizedError(DomainException):
     def __init__(self, reason: str) -> None:
         self.reason = reason
         super().__init__(f"Unauthorized: {reason}")
+
+
+class MaxActiveBookingsExceededError(DomainException):
+    def __init__(self, max_active: int) -> None:
+        self.max_active = max_active
+        super().__init__(
+            f"Maximum number of active bookings ({max_active}) has been reached"
+        )
+
+
+class CancellationDeadlineError(DomainException):
+    def __init__(self, deadline_hours: int) -> None:
+        self.deadline_hours = deadline_hours
+        super().__init__(
+            f"Bookings cannot be cancelled less than {deadline_hours} hours before the start time"
+        )

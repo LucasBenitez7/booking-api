@@ -27,6 +27,18 @@ def register_domain_exception_handlers(app: FastAPI) -> None:
 
 
 def _http_status_for_domain_exception(exc: DomainException) -> int:
+    from booking.domain.exceptions.auth_errors import (
+        AdminRequiredError,
+        AuthenticationError,
+        EmailAlreadyRegisteredError,
+        InvalidPasswordResetTokenError,
+        WeakPasswordError,
+    )
+    from booking.domain.exceptions.booking_errors import (
+        CancellationDeadlineError,
+        MaxActiveBookingsExceededError,
+    )
+
     if isinstance(exc, BookingConflictError):
         return 409
     if isinstance(exc, (SpaceNotFoundError, BookingNotFoundError, UserNotFoundError)):
@@ -35,4 +47,16 @@ def _http_status_for_domain_exception(exc: DomainException) -> int:
         return 400
     if isinstance(exc, UnauthorizedError):
         return 403
+    if isinstance(exc, AuthenticationError):
+        return 401
+    if isinstance(exc, EmailAlreadyRegisteredError):
+        return 409
+    if isinstance(exc, AdminRequiredError):
+        return 403
+    if isinstance(exc, (WeakPasswordError, InvalidPasswordResetTokenError)):
+        return 400
+    if isinstance(exc, MaxActiveBookingsExceededError):
+        return 409
+    if isinstance(exc, CancellationDeadlineError):
+        return 422
     return 500

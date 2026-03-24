@@ -3,12 +3,15 @@ from datetime import UTC, datetime
 from booking.application.dtos.booking_dtos import UpdateBookingDTO
 from booking.application.dtos.booking_response_dto import BookingResponseDTO
 from booking.domain.exceptions.booking_errors import (
+    BookingConflictError,
     BookingNotFoundError,
     InvalidTimeSlotError,
+    SpaceNotFoundError,
     UnauthorizedError,
     UserNotFoundError,
 )
 from booking.domain.ports.booking_repository import BookingRepository
+from booking.domain.ports.space_repository import SpaceRepository
 from booking.domain.ports.user_repository import UserRepository
 from booking.domain.value_objects.booking_id import BookingId
 from booking.domain.value_objects.time_slot import TimeSlot
@@ -18,9 +21,11 @@ class UpdateBookingUseCase:
     def __init__(
         self,
         booking_repository: BookingRepository,
+        space_repository: SpaceRepository,
         user_repository: UserRepository,
     ) -> None:
         self._booking_repo = booking_repository
+        self._space_repo = space_repository
         self._user_repo = user_repository
 
     async def execute(self, dto: UpdateBookingDTO) -> BookingResponseDTO:
@@ -42,6 +47,23 @@ class UpdateBookingUseCase:
             raise InvalidTimeSlotError("Booking cannot start in the past")
 
         new_time_slot = TimeSlot(start=dto.start, end=dto.end)
+        space = await self._space_repo.find_by_id(booking.space_id)
+        if space is None:
+            raise SpaceNotFoundError(str(booking.space_id))
+        space.validate_booking_slot(new_time_slot, datetime.now(tz=UTC))
+
+        conflicts = await self._booking_repo.find_conflicts(
+            space_id=booking.space_id,
+            time_slot=new_time_slot,
+            exclude_booking_id=booking_id,
+        )
+        if conflicts:
+            raise BookingConflictError(
+                space_id=str(booking.space_id),
+                start=dto.start.isoformat(),
+                end=dto.end.isoformat(),
+            )
+
         booking.update_time_slot(new_time_slot=new_time_slot, notes=dto.notes)
 
         await self._booking_repo.update(booking)

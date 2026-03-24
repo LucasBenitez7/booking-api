@@ -1,4 +1,4 @@
-from sqlalchemy import and_, select
+from sqlalchemy import and_, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from booking.domain.entities.booking import Booking
@@ -58,3 +58,28 @@ class SQLAlchemyBookingRepository:
         model = BookingMapper.to_model(booking)
         await self._session.merge(model)
         await self._session.flush()
+
+    async def find_all(
+        self,
+        status: BookingStatus | None = None,
+        limit: int = 500,
+        offset: int = 0,
+    ) -> list[Booking]:
+        stmt = select(BookingModel).order_by(BookingModel.start.desc())
+        if status is not None:
+            stmt = stmt.where(BookingModel.status == status.value)
+        stmt = stmt.limit(limit).offset(offset)
+        result = await self._session.execute(stmt)
+        return [BookingMapper.to_domain(m) for m in result.scalars().all()]
+
+    async def count_active_by_user(self, user_id: BookingId) -> int:
+        stmt = (
+            select(func.count())
+            .select_from(BookingModel)
+            .where(
+                BookingModel.user_id == str(user_id),
+                BookingModel.status == BookingStatus.CONFIRMED.value,
+            )
+        )
+        result = await self._session.execute(stmt)
+        return int(result.scalar_one())
