@@ -18,12 +18,30 @@ FUTURE_END_2 = datetime(2099, 6, 2, 11, 0, tzinfo=UTC)
 
 
 def make_booking(user_id: BookingId | None = None) -> Booking:
+    """Use Booking.create so BookingCreated event is emitted (new booking path)."""
     uid = user_id or BookingId.generate()
-    return Booking(
+    return Booking.create(
         id=BookingId.generate(),
         space_id=BookingId.generate(),
         user_id=uid,
         time_slot=TimeSlot(start=FUTURE_START, end=FUTURE_END),
+    )
+
+
+def make_persisted_booking(user_id: BookingId | None = None) -> Booking:
+    """Simulate loading from DB — no events emitted."""
+    uid = user_id or BookingId.generate()
+
+    now = datetime.now(tz=UTC)
+    return Booking.reconstitute(
+        id=BookingId.generate(),
+        space_id=BookingId.generate(),
+        user_id=uid,
+        time_slot=TimeSlot(start=FUTURE_START, end=FUTURE_END),
+        status=BookingStatus.CONFIRMED,
+        notes=None,
+        created_at=now,
+        updated_at=now,
     )
 
 
@@ -37,6 +55,11 @@ def test_booking_emits_created_event() -> None:
     events = booking.pull_events()
     assert len(events) == 1
     assert isinstance(events[0], BookingCreated)
+
+
+def test_reconstituted_booking_emits_no_events() -> None:
+    booking = make_persisted_booking()
+    assert booking.pull_events() == []
 
 
 def test_pull_events_clears_events() -> None:

@@ -52,7 +52,7 @@ SQLAlchemy models and domain entities are always separate classes connected by m
 - [x] Phase 1 — Domain and application layer (entities, value objects, use cases, tests)
 - [x] Phase 2 — Database infrastructure (SQLAlchemy repos, Alembic migrations)
 - [x] Phase 2b — Domain business rules (Space constraints, UpdateBooking, admin powers)
-- [ ] Phase 3 — HTTP API and authentication (FastAPI routes, JWT, middleware, password reset via email token)
+- [x] Phase 3 — HTTP API and authentication (FastAPI routes, JWT, middleware, password reset via email token)
 - [ ] Phase 4 — Cache and async workers (Redis availability cache, Celery tasks)
 - [ ] Phase 5 — Kubernetes deployment (k3s, HPA, GitHub Actions deploy + release tagging)
 - [ ] Phase 6 — Polish, documentation and release (README, ADRs, coverage badge, release-please)
@@ -61,7 +61,7 @@ SQLAlchemy models and domain entities are always separate classes connected by m
 
 ## Current status
 
-**Current phase:** 3 — HTTP API and authentication
+**Current phase:** 4 — Cache and async workers
 
 **Completed:**
 - Phase 0 — uv init, pyproject.toml, folder structure,
@@ -90,39 +90,27 @@ SQLAlchemy models and domain entities are always separate classes connected by m
   - Admin can cancel any booking (is_admin flag bypasses ownership check)
   - UpdateBookingUseCase + BookingUpdated domain event
   - 49 unit tests passing — Ruff clean — mypy strict clean
+- Phase 3 — HTTP API and authentication:
+  - `create_app()` + lifespan: DB init, optional Redis, JWT, password reset store (Redis or in-memory)
+  - Ports: PasswordHasher (async), AuthTokenIssuer, PasswordResetTokenStore (domain)
+  - Use cases: RegisterUser, LoginUser, RefreshAccessToken, RequestPasswordReset, ConfirmPasswordReset
+  - Admin: CreateSpace, UpdateSpace, DeactivateSpace (not hard delete), ListAdminBookings, UpdateUserAdmin; GetBooking
+  - Public spaces: ListSpacesUseCase + GetSpaceUseCase (no infra imports in router)
+  - Routers: auth, spaces, bookings, admin, health; Pydantic schemas; deps + rate limits (slowapi)
+  - Middleware: CORS, security headers, X-Request-ID + structlog JSON; refresh token HttpOnly cookie
+  - CreateBooking: enforce `max_active_bookings` + `Space.validate_booking_slot`; UpdateBooking: space conflict check
+  - `Space.validate_booking_slot`: duration + advance + opening/closing hours
+  - `Space.validate_cancellation`: cancellation_deadline_hours (admins bypass)
+  - `CancellationDeadlineError` → HTTP 422
+  - `Booking.create()` / `Booking.reconstitute()`: factory methods — creation emits BookingCreated, rehydration does not
+  - `GetBookingUseCase`: authorization based on `user.is_admin` from DB (not from DTO)
+  - `PasswordHasher` methods are async — bcrypt runs in thread executor (non-blocking)
+  - `MIN_PASSWORD_LENGTH` centralized in `domain/value_objects/password_policy.py`
+  - `MemoryPasswordResetStore`: tokens now expire via `time.monotonic` TTL
+  - BookingRepository: `find_all`, `count_active_by_user`
+  - Integration tests: `/health`, `/health/ready` (HTTP); 70 tests total — Ruff clean — mypy strict clean
 
-**Working on now:** Phase 3 — HTTP API and authentication
-
-**Pending in Phase 3:**
-- FastAPI app factory with lifespan
-- JWT: access token 15min, refresh token 7 days in HttpOnly cookie
-- Password reset via email token (token stored in Redis, TTL 30min, single-use, no email enumeration)
-- Rate limiting: 100 req/min per IP, 10 req/min on /auth (slowapi)
-- Middleware: structured logging (structlog — request_id, user_id, duration), security headers, CORS
-- Endpoints:
-  - POST   /auth/register
-  - POST   /auth/login
-  - POST   /auth/refresh
-  - DELETE /auth/logout
-  - POST   /auth/password-reset/request
-  - POST   /auth/password-reset/confirm
-  - GET    /spaces
-  - GET    /spaces/{id}
-  - GET    /spaces/{id}/availability
-  - POST   /bookings
-  - GET    /bookings
-  - GET    /bookings/{id}
-  - PATCH  /bookings/{id}
-  - DELETE /bookings/{id}
-  - GET    /admin/bookings
-  - GET    /admin/spaces
-  - POST   /admin/spaces
-  - PATCH  /admin/spaces/{id}
-  - DELETE /admin/spaces/{id}
-  - PATCH  /admin/users/{id}
-  - GET    /health
-  - GET    /health/ready
-- Full HTTP tests per endpoint (httpx + pytest)
+**Working on now:** Phase 4 — Cache and async workers
 
 **Pending in Phase 4:**
 - Redis availability cache (TTL 5min, invalidated on create/update/cancel booking)

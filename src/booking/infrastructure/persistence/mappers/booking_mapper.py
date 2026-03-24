@@ -8,7 +8,7 @@ from booking.infrastructure.persistence.models.booking_model import BookingModel
 class BookingMapper:
     @staticmethod
     def to_domain(model: BookingModel) -> Booking:
-        return Booking(
+        return Booking.reconstitute(
             id=BookingId.from_string(model.id),
             space_id=BookingId.from_string(model.space_id),
             user_id=BookingId.from_string(model.user_id),

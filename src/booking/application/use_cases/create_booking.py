@@ -6,6 +6,7 @@ from booking.domain.entities.booking import Booking
 from booking.domain.exceptions.booking_errors import (
     BookingConflictError,
     InvalidTimeSlotError,
+    MaxActiveBookingsExceededError,
     SpaceNotFoundError,
     UserNotFoundError,
 )
@@ -49,6 +50,11 @@ class CreateBookingUseCase:
             raise InvalidTimeSlotError("Booking cannot start in the past")
 
         time_slot = TimeSlot(start=dto.start, end=dto.end)
+        space.validate_booking_slot(time_slot, datetime.now(tz=UTC))
+
+        active_count = await self._booking_repo.count_active_by_user(user_id)
+        if active_count >= user.max_active_bookings:
+            raise MaxActiveBookingsExceededError(user.max_active_bookings)
 
         conflicts = await self._booking_repo.find_conflicts(
             space_id=space_id,
@@ -61,7 +67,7 @@ class CreateBookingUseCase:
                 end=dto.end.isoformat(),
             )
 
-        booking = Booking(
+        booking = Booking.create(
             id=BookingId.generate(),
             space_id=space_id,
             user_id=user_id,

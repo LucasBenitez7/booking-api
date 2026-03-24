@@ -55,6 +55,7 @@ def make_use_case(
     space_repo.find_by_id.return_value = space or make_space()
     user_repo.find_by_id.return_value = user or make_user()
     booking_repo.find_conflicts.return_value = conflicts or []
+    booking_repo.count_active_by_user.return_value = 0
 
     use_case = CreateBookingUseCase(
         booking_repository=booking_repo,
@@ -126,11 +127,15 @@ async def test_create_booking_user_not_found() -> None:
 async def test_create_booking_conflict() -> None:
     space = make_space()
     user = make_user()
-    existing = Booking(
+    existing = Booking.reconstitute(
         id=BookingId.generate(),
         space_id=space.id,
         user_id=user.id,
         time_slot=TimeSlot(start=FUTURE_START, end=FUTURE_END),
+        status=BookingStatus.CONFIRMED,
+        notes=None,
+        created_at=FUTURE_START,
+        updated_at=FUTURE_START,
     )
     use_case, _, _, _, _ = make_use_case(space=space, user=user, conflicts=[existing])
 

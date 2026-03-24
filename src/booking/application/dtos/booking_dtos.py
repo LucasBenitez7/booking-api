@@ -28,6 +28,12 @@ class UpdateBookingDTO:
 
 
 @dataclass(frozen=True)
+class GetBookingDTO:
+    booking_id: str
+    requesting_user_id: str
+
+
+@dataclass(frozen=True)
 class GetAvailabilityDTO:
     space_id: str
     start: datetime
