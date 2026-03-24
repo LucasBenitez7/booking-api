@@ -46,9 +46,15 @@ spec:
             limits:
               cpu: "200m"
               memory: "256Mi"
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp  # celerybeat-schedule file is written here
           securityContext:
             allowPrivilegeEscalation: false
             capabilities:
               drop:
                 - ALL
+      volumes:
+        - name: tmp
+          emptyDir: {}
       restartPolicy: Always

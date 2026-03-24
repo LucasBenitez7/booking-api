@@ -50,7 +50,7 @@ jobs:
             .
 
       - name: Run Trivy vulnerability scan
-        uses: aquasecurity/trivy-action@master
+        uses: aquasecurity/trivy-action@v0.35.0
         with:
           image-ref: ${{ steps.meta.outputs.sha_tag }}
           format: table
@@ -92,6 +92,9 @@ jobs:
           kubectl apply -f k8s/api/service.yaml
           kubectl apply -f k8s/api/ingress.yaml
           kubectl apply -f k8s/api/hpa.yaml
+          kubectl apply -f k8s/api/deployment.yaml
+          kubectl apply -f k8s/worker/deployment-worker.yaml
+          kubectl apply -f k8s/worker/deployment-beat.yaml
           kubectl apply -f k8s/redis/deployment-redis.yaml
           kubectl apply -f k8s/network-policy.yaml
 
