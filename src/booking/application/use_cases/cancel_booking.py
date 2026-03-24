@@ -33,7 +33,9 @@ class CancelBookingUseCase:
         if user is None:
             raise UserNotFoundError(dto.cancelled_by)
 
-        booking.cancel(cancelled_by=cancelled_by, reason=dto.reason, is_admin=user.is_admin)
+        booking.cancel(
+            cancelled_by=cancelled_by, reason=dto.reason, is_admin=user.is_admin
+        )
         await self._booking_repo.update(booking)
         await self._notification_service.send_cancellation(booking, user)
 

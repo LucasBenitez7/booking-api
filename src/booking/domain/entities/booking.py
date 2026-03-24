@@ -54,11 +54,11 @@ class Booking:
         )
         self._events.append(event)
 
-    def update_time_slot(self, new_time_slot: TimeSlot, notes: str | None = None) -> None:
+    def update_time_slot(
+        self, new_time_slot: TimeSlot, notes: str | None = None
+    ) -> None:
         if not self.status.can_cancel():
-            raise ValueError(
-                f"Cannot update booking with status '{self.status.value}'"
-            )
+            raise ValueError(f"Cannot update booking with status '{self.status.value}'")
         self.time_slot = new_time_slot
         if notes is not None:
             self.notes = notes

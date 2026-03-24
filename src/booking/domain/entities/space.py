@@ -30,9 +30,7 @@ class Space:
         if self.max_duration_minutes <= 0:
             raise ValueError("max_duration_minutes must be positive")
         if self.min_duration_minutes > self.max_duration_minutes:
-            raise ValueError(
-                "min_duration_minutes cannot exceed max_duration_minutes"
-            )
+            raise ValueError("min_duration_minutes cannot exceed max_duration_minutes")
         if self.opening_time >= self.closing_time:
             raise ValueError("opening_time must be before closing_time")
 
