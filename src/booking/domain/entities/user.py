@@ -13,6 +13,7 @@ class User:
     hashed_password: str
     is_active: bool = True
     is_admin: bool = False
+    max_active_bookings: int = 5
     created_at: datetime = field(default_factory=lambda: datetime.now(tz=UTC))
 
     def deactivate(self) -> None:

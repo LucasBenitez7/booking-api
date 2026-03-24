@@ -82,7 +82,7 @@ async def test_create_booking_success() -> None:
 
     result = await use_case.execute(dto)
 
-    assert result.status == BookingStatus.PENDING.value
+    assert result.status == BookingStatus.CONFIRMED.value
     assert result.space_id == str(space.id)
     assert result.user_id == str(user.id)
     booking_repo.save.assert_called_once()

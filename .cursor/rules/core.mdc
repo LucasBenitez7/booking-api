@@ -35,6 +35,14 @@ class SQLAlchemyBookingRepository:
         ...  # SQLAlchemy implementation here
 ```
 
+# Key domain decisions
+- Bookings are created directly as CONFIRMED — no PENDING state ever
+- Business rules live in Space entity: min_duration_minutes, max_duration_minutes,
+  min_advance_minutes, cancellation_deadline_hours, opening_time, closing_time
+- User has max_active_bookings (default 5) — configurable per user by admin
+- Admin can cancel any booking regardless of ownership
+- Domain exceptions extend DomainException base class in domain/exceptions/booking_errors.py
+
 # SQLAlchemy models vs Domain entities
 These are always separate classes connected by mappers in infrastructure/persistence/mappers/.
 Never use SQLAlchemy models directly in domain or application layers.

@@ -27,7 +27,6 @@ Portfolio project — demonstrates hexagonal architecture, async Python, Kuberne
 
 ## Architecture — Hexagonal (Ports & Adapters)
 Dependency rule: inner layers never import from outer layers.
-
 ```
 infrastructure (FastAPI, SQLAlchemy, Redis, Celery)
   └── application (use cases — no HTTP, no DB)
@@ -42,52 +41,108 @@ SQLAlchemy models and domain entities are always separate classes connected by m
 - **Domain entities are pure Python** — no SQLAlchemy, no Pydantic, no FastAPI imports ever
 - **DTOs in application layer use dataclasses**, not Pydantic (Pydantic is HTTP-only)
 - **Refresh token in HttpOnly cookie** — access token 15min, refresh token 7 days
-- **Availability cached in Redis** — TTL 5 minutes, invalidated on create/cancel booking
+- **Availability cached in Redis** — TTL 5 minutes, invalidated on create/cancel/update booking
 - **ORM models ≠ domain entities** — connected via mappers in infrastructure/persistence/mappers/
+- **Bookings are created directly as CONFIRMED** — no PENDING state in normal flow
+- **Business rules live in Space entity** — min/max duration, advance time, cancellation deadline, opening hours
+- **User controls their own booking limit** — max_active_bookings field, default 5, configurable by admin
 
 ## Development phases
 - [x] Phase 0 — Project setup (uv, Ruff, mypy, Docker, docker-compose, GitHub Actions)
-- [ ] Phase 1 — Domain and application layer (entities, value objects, use cases, tests)
-- [ ] Phase 2 — Database infrastructure (SQLAlchemy repos, Alembic migrations)
-- [ ] Phase 3 — HTTP API and authentication (FastAPI routes, JWT, middleware)
+- [x] Phase 1 — Domain and application layer (entities, value objects, use cases, tests)
+- [x] Phase 2 — Database infrastructure (SQLAlchemy repos, Alembic migrations)
+- [x] Phase 2b — Domain business rules (Space constraints, UpdateBooking, admin powers)
+- [ ] Phase 3 — HTTP API and authentication (FastAPI routes, JWT, middleware, password reset via email token)
 - [ ] Phase 4 — Cache and async workers (Redis availability cache, Celery tasks)
 - [ ] Phase 5 — Kubernetes deployment (k3s, HPA, GitHub Actions deploy + release tagging)
-- [ ] Phase 6 — Polish, documentation and release (README, ADRs, coverage badge, release-please with release.yml )
+- [ ] Phase 6 — Polish, documentation and release (README, ADRs, coverage badge, release-please)
 
 ---
 
 ## Current status
 
-**Current phase:** 2 — Database infrastructure
+**Current phase:** 3 — HTTP API and authentication
 
 **Completed:**
 - Phase 0 — uv init, pyproject.toml, folder structure,
   Dockerfile, docker-compose, GitHub Actions CI, README
 - Phase 1 — Full domain and application layer:
   - Value Objects: BookingId, BookingStatus, TimeSlot, Email
-  - Domain Events: BookingCreated, BookingCancelled
-  - Domain Exceptions: DomainException base, BookingConflictError,
-    SpaceNotFoundError, UserNotFoundError, BookingNotFoundError,
-    UnauthorizedError, InvalidTimeSlotError, InvalidBookingStatusFilterError
+  - Domain Events: BookingCreated, BookingCancelled, BookingUpdated
+  - Domain Exceptions: DomainException base + all domain errors
   - Entities: Booking, Space, User
   - Ports: BookingRepository, SpaceRepository, UserRepository, NotificationService
   - DTOs: booking_dtos.py, booking_response_dto.py
-  - Use Cases: CreateBooking, CancelBooking, GetAvailability,
-    ListUserBookings, ConfirmBooking
+  - Use Cases: CreateBooking, CancelBooking, GetAvailability, ListUserBookings, UpdateBooking
   - API: exception_handlers.py (domain → HTTP status codes)
-  - 43 unit tests passing — 81% coverage
+- Phase 2 — Database infrastructure:
+  - SQLAlchemy models: UserModel, SpaceModel, BookingModel
+  - Mappers: UserMapper, SpaceMapper, BookingMapper
+  - Repositories: SQLAlchemyUserRepository, SQLAlchemySpaceRepository, SQLAlchemyBookingRepository
+  - Alembic config + migrations (initial schema + new columns)
+  - Async database session with NullPool for tests
+  - Seed script with demo data
+- Phase 2b — Domain business rules:
+  - Bookings created directly as CONFIRMED — no PENDING state
+  - ConfirmBookingUseCase removed
+  - Space: min/max_duration_minutes, min_advance_minutes, cancellation_deadline_hours, opening_time, closing_time
+  - User: max_active_bookings (default 5, configurable by admin)
+  - Admin can cancel any booking (is_admin flag bypasses ownership check)
+  - UpdateBookingUseCase + BookingUpdated domain event
+  - 49 unit tests passing — Ruff clean — mypy strict clean
 
-**Working on now:** Fase 2 — Database infrastructure
+**Working on now:** Phase 3 — HTTP API and authentication
 
-**Pending in this phase:**
-- SQLAlchemy models: BookingModel, SpaceModel, UserModel
-- Mappers: BookingMapper, SpaceMapper, UserMapper
-- Repositories: SQLAlchemyBookingRepository, SQLAlchemySpaceRepository, SQLAlchemyUserRepository
-- Alembic: config + first migration (users, spaces, bookings tables)
-- Async database session with connection pooling
-- Seed script with demo data
-- Integration tests against real PostgreSQL
+**Pending in Phase 3:**
+- FastAPI app factory with lifespan
+- JWT: access token 15min, refresh token 7 days in HttpOnly cookie
+- Password reset via email token (token stored in Redis, TTL 30min, single-use, no email enumeration)
+- Rate limiting: 100 req/min per IP, 10 req/min on /auth (slowapi)
+- Middleware: structured logging (structlog — request_id, user_id, duration), security headers, CORS
+- Endpoints:
+  - POST   /auth/register
+  - POST   /auth/login
+  - POST   /auth/refresh
+  - DELETE /auth/logout
+  - POST   /auth/password-reset/request
+  - POST   /auth/password-reset/confirm
+  - GET    /spaces
+  - GET    /spaces/{id}
+  - GET    /spaces/{id}/availability
+  - POST   /bookings
+  - GET    /bookings
+  - GET    /bookings/{id}
+  - PATCH  /bookings/{id}
+  - DELETE /bookings/{id}
+  - GET    /admin/bookings
+  - GET    /admin/spaces
+  - POST   /admin/spaces
+  - PATCH  /admin/spaces/{id}
+  - DELETE /admin/spaces/{id}
+  - PATCH  /admin/users/{id}
+  - GET    /health
+  - GET    /health/ready
+- Full HTTP tests per endpoint (httpx + pytest)
+
+**Pending in Phase 4:**
+- Redis availability cache (TTL 5min, invalidated on create/update/cancel booking)
+- Celery tasks: send_confirmation, send_reminder, cleanup_expired
+
+**Pending in Phase 5:**
+- K8s manifests: Deployment, HPA, Service, Ingress, ConfigMap, Secret, NetworkPolicy
+- Liveness/Readiness probes
+- GitHub Actions deploy + Trivy scan + rolling update zero-downtime
+- release-please with release.yml
+
+**Pending in Phase 6:**
+- Full README with diagrams and ADRs
+- Coverage badge (minimum 80%)
+- Complete .env.example
+- CONTRIBUTING.md
 
 **Known decisions / blockers:**
 - SQLAlchemy models and domain entities are always separate — connected via mappers
 - Use asyncpg driver (postgresql+asyncpg://)
+- No PENDING state — bookings go directly to CONFIRMED
+- max_active_bookings lives in User entity, not in global settings
+- Password reset: token in Redis with 30min TTL, single-use, no email enumeration

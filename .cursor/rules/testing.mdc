@@ -6,7 +6,7 @@ alwaysApply: false
 
 # Testing stack
 pytest · pytest-asyncio · httpx · factory-boy · Faker · pytest-mock · pytest-cov
-Coverage target: 0% minimum.
+Coverage target: 80% minimum.
 
 # Test structure — mirrors src/ structure exactly
 tests/
