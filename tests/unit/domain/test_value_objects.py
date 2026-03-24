@@ -44,25 +44,9 @@ def test_email_is_immutable() -> None:
         email.value = "other@example.com"  # type: ignore[misc]
 
 
-def test_booking_status_can_cancel_pending() -> None:
-    assert BookingStatus.PENDING.can_cancel() is True
-
-
 def test_booking_status_can_cancel_confirmed() -> None:
     assert BookingStatus.CONFIRMED.can_cancel() is True
 
 
 def test_booking_status_cannot_cancel_cancelled() -> None:
     assert BookingStatus.CANCELLED.can_cancel() is False
-
-
-def test_booking_status_can_confirm_pending() -> None:
-    assert BookingStatus.PENDING.can_confirm() is True
-
-
-def test_booking_status_cannot_confirm_confirmed() -> None:
-    assert BookingStatus.CONFIRMED.can_confirm() is False
-
-
-def test_booking_status_cannot_confirm_cancelled() -> None:
-    assert BookingStatus.CANCELLED.can_confirm() is False

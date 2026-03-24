@@ -19,8 +19,12 @@ class CancelBookingDTO:
 
 
 @dataclass(frozen=True)
-class ConfirmBookingDTO:
+class UpdateBookingDTO:
     booking_id: str
+    requesting_user_id: str
+    start: datetime
+    end: datetime
+    notes: str | None = None
 
 
 @dataclass(frozen=True)

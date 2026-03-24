@@ -72,7 +72,7 @@ async def test_save_and_find_booking(db_session: AsyncSession) -> None:
     found = await booking_repo.find_by_id(booking.id)
     assert found is not None
     assert found.id == booking.id
-    assert found.status == BookingStatus.PENDING
+    assert found.status == BookingStatus.CONFIRMED
 
 
 @pytest.mark.asyncio
@@ -162,9 +162,9 @@ async def test_update_booking_status(db_session: AsyncSession) -> None:
     booking = make_booking(space.id, user.id)
     await booking_repo.save(booking)
 
-    booking.confirm()
+    booking.cancel(cancelled_by=booking.user_id)
     await booking_repo.update(booking)
 
     found = await booking_repo.find_by_id(booking.id)
     assert found is not None
-    assert found.status == BookingStatus.CONFIRMED
+    assert found.status == BookingStatus.CANCELLED

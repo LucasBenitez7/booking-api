@@ -1,43 +1,50 @@
-from booking.application.dtos.booking_dtos import CancelBookingDTO
+from datetime import UTC, datetime
+
+from booking.application.dtos.booking_dtos import UpdateBookingDTO
 from booking.application.dtos.booking_response_dto import BookingResponseDTO
 from booking.domain.exceptions.booking_errors import (
     BookingNotFoundError,
+    InvalidTimeSlotError,
+    UnauthorizedError,
     UserNotFoundError,
 )
 from booking.domain.ports.booking_repository import BookingRepository
-from booking.domain.ports.notification_service import NotificationService
 from booking.domain.ports.user_repository import UserRepository
 from booking.domain.value_objects.booking_id import BookingId
+from booking.domain.value_objects.time_slot import TimeSlot
 
 
-class CancelBookingUseCase:
+class UpdateBookingUseCase:
     def __init__(
         self,
         booking_repository: BookingRepository,
         user_repository: UserRepository,
-        notification_service: NotificationService,
     ) -> None:
         self._booking_repo = booking_repository
         self._user_repo = user_repository
-        self._notification_service = notification_service
 
-    async def execute(self, dto: CancelBookingDTO) -> BookingResponseDTO:
+    async def execute(self, dto: UpdateBookingDTO) -> BookingResponseDTO:
         booking_id = BookingId.from_string(dto.booking_id)
-        cancelled_by = BookingId.from_string(dto.cancelled_by)
+        requesting_user_id = BookingId.from_string(dto.requesting_user_id)
 
         booking = await self._booking_repo.find_by_id(booking_id)
         if booking is None:
             raise BookingNotFoundError(dto.booking_id)
 
-        user = await self._user_repo.find_by_id(cancelled_by)
+        user = await self._user_repo.find_by_id(requesting_user_id)
         if user is None:
-            raise UserNotFoundError(dto.cancelled_by)
+            raise UserNotFoundError(dto.requesting_user_id)
 
-        booking.cancel(
-            cancelled_by=cancelled_by, reason=dto.reason, is_admin=user.is_admin
-        )
+        if not user.is_admin and requesting_user_id != booking.user_id:
+            raise UnauthorizedError("Only the booking owner or an admin can update it")
+
+        if dto.start < datetime.now(tz=UTC):
+            raise InvalidTimeSlotError("Booking cannot start in the past")
+
+        new_time_slot = TimeSlot(start=dto.start, end=dto.end)
+        booking.update_time_slot(new_time_slot=new_time_slot, notes=dto.notes)
+
         await self._booking_repo.update(booking)
-        await self._notification_service.send_cancellation(booking, user)
 
         return BookingResponseDTO(
             id=str(booking.id),

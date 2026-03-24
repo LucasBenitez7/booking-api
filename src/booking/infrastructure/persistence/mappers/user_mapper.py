@@ -14,6 +14,7 @@ class UserMapper:
             hashed_password=model.hashed_password,
             is_active=model.is_active,
             is_admin=model.is_admin,
+            max_active_bookings=model.max_active_bookings,
             created_at=model.created_at,
         )
 
@@ -26,5 +27,6 @@ class UserMapper:
             hashed_password=entity.hashed_password,
             is_active=entity.is_active,
             is_admin=entity.is_admin,
+            max_active_bookings=entity.max_active_bookings,
             created_at=entity.created_at,
         )
