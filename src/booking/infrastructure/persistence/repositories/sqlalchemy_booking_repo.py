@@ -44,7 +44,9 @@ class SQLAlchemyBookingRepository:
         stmt = select(BookingModel).where(
             and_(
                 BookingModel.space_id == str(space_id),
-                BookingModel.status != BookingStatus.CANCELLED.value,
+                BookingModel.status.notin_(
+                    [BookingStatus.CANCELLED.value, BookingStatus.EXPIRED.value]
+                ),
                 BookingModel.start < time_slot.end,
                 BookingModel.end > time_slot.start,
             )

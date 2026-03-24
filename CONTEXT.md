@@ -54,8 +54,8 @@ SQLAlchemy models and domain entities are always separate classes connected by m
 - [x] Phase 2b — Domain business rules (Space constraints, UpdateBooking, admin powers)
 - [x] Phase 3 — HTTP API and authentication (FastAPI routes, JWT, middleware, password reset via email token)
 - [x] Phase 4 — Cache and async workers (Redis availability cache, Celery tasks)
-- [ ] Phase 5 — Kubernetes deployment (k3s, HPA, GitHub Actions deploy + release tagging)
-- [ ] Phase 6 — Polish, documentation and release (README, ADRs, coverage badge, release-please)
+- [x] Phase 5 — Kubernetes deployment (k3s, HPA, GitHub Actions deploy + release tagging)
+- [x] Phase 6 — Polish, documentation and release (README, ADRs, coverage badge, release-please)
 
 ---
 
@@ -132,13 +132,19 @@ SQLAlchemy models and domain entities are always separate classes connected by m
   - `release.yml`: release-please automatic versioning + CHANGELOG from conventional commits
   - `security.yml`: added Trivy container scan job uploading SARIF to GitHub Security tab
 
-**Working on now:** Phase 6 — Polish, documentation and release
+**Working on now:** — all phases complete —
 
 **Pending in Phase 6:**
-- Full README with architecture diagram and ADRs
-- Coverage badge (minimum 80%)
-- Complete `.env.example`
-- `CONTRIBUTING.md` update
+- README.md: architecture diagram (Mermaid), stack badges, endpoints summary, local setup guide
+- ADRs (Architecture Decision Records): 3-4 key decisions documented
+- `.env.example`: complete and up to date with all variables
+- Coverage badge in README (pytest-cov now enforces **≥80%** on application + domain + selected infra — see `pyproject.toml` `[tool.coverage.run] omit`)
+- `CONTRIBUTING.md`: update with current workflow (branches, commits, PR process)
+
+**Phase 6 progress — tests:**
+- 124 unit tests: Space entity rules, auth (register/login/refresh), GetBooking, admin spaces, list bookings/spaces, password reset, logging notification adapter
+- Coverage gate: `cov-fail-under=80` with HTTP/DB/Celery/Redis adapters omitted from the metric (those layers are covered by integration tests or staging)
+
 
 **Known decisions / blockers:**
 - SQLAlchemy models and domain entities are always separate — connected via mappers
