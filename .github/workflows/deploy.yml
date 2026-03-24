@@ -1,0 +1,117 @@
+name: Deploy
+
+on:
+  push:
+    branches:
+      - development  # deploy to staging on every push to development
+      - main         # deploy to production on every push to main
+
+env:
+  AWS_REGION: us-east-1
+  ECR_REPOSITORY: booking-api
+
+jobs:
+  build-and-push:
+    name: Build & Push to ECR
+    runs-on: ubuntu-latest
+    outputs:
+      image_tag: ${{ steps.meta.outputs.sha_tag }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Generate image tags
+        id: meta
+        run: |
+          SHA_TAG="${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ github.sha }}"
+          BRANCH_TAG="${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ github.ref_name }}"
+          echo "sha_tag=$SHA_TAG" >> "$GITHUB_OUTPUT"
+          echo "branch_tag=$BRANCH_TAG" >> "$GITHUB_OUTPUT"
+          echo "registry=${{ steps.login-ecr.outputs.registry }}" >> "$GITHUB_OUTPUT"
+
+      - name: Build Docker image
+        run: |
+          docker build \
+            --tag "${{ steps.meta.outputs.sha_tag }}" \
+            --tag "${{ steps.meta.outputs.branch_tag }}" \
+            --cache-from "${{ steps.meta.outputs.branch_tag }}" \
+            --build-arg BUILDKIT_INLINE_CACHE=1 \
+            .
+
+      - name: Run Trivy vulnerability scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ steps.meta.outputs.sha_tag }}
+          format: table
+          exit-code: "1"       # fail the pipeline if CRITICAL vulnerabilities are found
+          severity: CRITICAL
+          ignore-unfixed: true
+
+      - name: Push image to ECR
+        run: |
+          docker push "${{ steps.meta.outputs.sha_tag }}"
+          docker push "${{ steps.meta.outputs.branch_tag }}"
+
+  deploy:
+    name: Rolling Update — ${{ github.ref_name }}
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    environment: ${{ github.ref_name == 'main' && 'production' || 'staging' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Configure kubectl
+        run: |
+          mkdir -p ~/.kube
+          echo "${{ secrets.KUBECONFIG_B64 }}" | base64 -d > ~/.kube/config
+          chmod 600 ~/.kube/config
+
+      - name: Apply K8s manifests
+        run: |
+          kubectl apply -f k8s/namespace.yaml
+          kubectl apply -f k8s/api/configmap.yaml
+          kubectl apply -f k8s/api/service.yaml
+          kubectl apply -f k8s/api/ingress.yaml
+          kubectl apply -f k8s/api/hpa.yaml
+          kubectl apply -f k8s/redis/deployment-redis.yaml
+          kubectl apply -f k8s/network-policy.yaml
+
+      - name: Rolling update — API
+        run: |
+          kubectl set image deployment/booking-api \
+            api=${{ needs.build-and-push.outputs.image_tag }} \
+            -n booking
+          kubectl rollout status deployment/booking-api -n booking --timeout=120s
+
+      - name: Rolling update — Worker
+        run: |
+          kubectl set image deployment/booking-worker \
+            worker=${{ needs.build-and-push.outputs.image_tag }} \
+            -n booking
+          kubectl rollout status deployment/booking-worker -n booking --timeout=120s
+
+      - name: Rolling update — Beat
+        run: |
+          kubectl set image deployment/booking-beat \
+            beat=${{ needs.build-and-push.outputs.image_tag }} \
+            -n booking
+          kubectl rollout status deployment/booking-beat -n booking --timeout=60s

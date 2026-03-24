@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: booking-api-config
+  namespace: booking
+data:
+  APP_ENV: "production"
+  APP_VERSION: "0.1.0"
+  LOG_LEVEL: "INFO"
+  ALLOWED_ORIGINS: "https://yourdomain.com"
+  DATABASE_POOL_SIZE: "5"
+  DATABASE_MAX_OVERFLOW: "10"
+  ACCESS_TOKEN_EXPIRE_MINUTES: "15"
+  REFRESH_TOKEN_EXPIRE_DAYS: "7"
+  PASSWORD_RESET_TOKEN_EXPIRE_MINUTES: "30"
+  REMINDER_HOURS_BEFORE: "24"
+  RATE_LIMIT_PER_MINUTE: "100"
+  RATE_LIMIT_AUTH_PER_MINUTE: "10"

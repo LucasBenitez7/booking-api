@@ -1,0 +1,24 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  release-please:
+    name: release-please
+    runs-on: ubuntu-latest
+    steps:
+      - uses: googleapis/release-please-action@v4
+        with:
+          release-type: python
+          # release-please reads conventional commits and:
+          # - bumps version in pyproject.toml
+          # - generates CHANGELOG.md
+          # - opens a Release PR automatically
+          # - creates a GitHub Release + tag on merge
