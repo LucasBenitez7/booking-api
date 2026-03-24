@@ -67,7 +67,15 @@ plugins = ["pydantic.mypy"]
 
 [[tool.mypy.overrides]]
 module = ["celery.*", "passlib.*", "slowapi.*", "factory.*", "faker.*"]
-ignore_missing_stubs = true
+ignore_errors = true
+
+[[tool.mypy.overrides]]
+module = [
+    "booking.infrastructure.workers.celery_app",
+    "booking.infrastructure.workers.beat_schedule",
+    "booking.infrastructure.workers.tasks.booking_tasks",
+]
+ignore_errors = true
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

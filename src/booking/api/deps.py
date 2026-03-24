@@ -33,6 +33,7 @@ from booking.domain.exceptions.auth_errors import (
     AuthenticationError,
 )
 from booking.domain.ports.auth_token_issuer import AuthTokenIssuer
+from booking.domain.ports.availability_cache import AvailabilityCache
 from booking.domain.ports.notification_service import NotificationService
 from booking.domain.ports.password_hasher import PasswordHasher
 from booking.domain.ports.password_reset_token_store import PasswordResetTokenStore
@@ -78,6 +79,10 @@ def get_password_reset_store(request: Request) -> PasswordResetTokenStore:
 
 def get_notification_service(request: Request) -> NotificationService:
     return cast(NotificationService, request.app.state.notification_service)
+
+
+def get_availability_cache(request: Request) -> AvailabilityCache:
+    return cast(AvailabilityCache, request.app.state.availability_cache)
 
 
 def get_register_user_use_case(
@@ -134,34 +139,40 @@ def get_confirm_password_reset_use_case(
 def get_create_booking_use_case(
     session: Annotated[AsyncSession, Depends(get_db_session)],
     notification: Annotated[NotificationService, Depends(get_notification_service)],
+    cache: Annotated[AvailabilityCache, Depends(get_availability_cache)],
 ) -> CreateBookingUseCase:
     return CreateBookingUseCase(
         SQLAlchemyBookingRepository(session),
         SQLAlchemySpaceRepository(session),
         SQLAlchemyUserRepository(session),
         notification,
+        cache,
     )
 
 
 def get_cancel_booking_use_case(
     session: Annotated[AsyncSession, Depends(get_db_session)],
     notification: Annotated[NotificationService, Depends(get_notification_service)],
+    cache: Annotated[AvailabilityCache, Depends(get_availability_cache)],
 ) -> CancelBookingUseCase:
     return CancelBookingUseCase(
         SQLAlchemyBookingRepository(session),
         SQLAlchemySpaceRepository(session),
         SQLAlchemyUserRepository(session),
         notification,
+        cache,
     )
 
 
 def get_update_booking_use_case(
     session: Annotated[AsyncSession, Depends(get_db_session)],
+    cache: Annotated[AvailabilityCache, Depends(get_availability_cache)],
 ) -> UpdateBookingUseCase:
     return UpdateBookingUseCase(
         SQLAlchemyBookingRepository(session),
         SQLAlchemySpaceRepository(session),
         SQLAlchemyUserRepository(session),
+        cache,
     )
 
 
@@ -182,10 +193,12 @@ def get_get_booking_use_case(
 
 def get_get_availability_use_case(
     session: Annotated[AsyncSession, Depends(get_db_session)],
+    cache: Annotated[AvailabilityCache, Depends(get_availability_cache)],
 ) -> GetAvailabilityUseCase:
     return GetAvailabilityUseCase(
         SQLAlchemyBookingRepository(session),
         SQLAlchemySpaceRepository(session),
+        cache,
     )
 
 

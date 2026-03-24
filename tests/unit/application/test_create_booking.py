@@ -51,6 +51,7 @@ def make_use_case(
     space_repo = AsyncMock()
     user_repo = AsyncMock()
     notification_service = AsyncMock()
+    cache = AsyncMock()
 
     space_repo.find_by_id.return_value = space or make_space()
     user_repo.find_by_id.return_value = user or make_user()
@@ -62,6 +63,7 @@ def make_use_case(
         space_repository=space_repo,
         user_repository=user_repo,
         notification_service=notification_service,
+        availability_cache=cache,
     )
     return use_case, booking_repo, space_repo, user_repo, notification_service
 

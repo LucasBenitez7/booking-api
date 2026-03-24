@@ -1,10 +1,13 @@
 from booking.application.dtos.booking_dtos import GetAvailabilityDTO
 from booking.application.dtos.booking_response_dto import AvailabilityResponseDTO
 from booking.domain.exceptions.booking_errors import SpaceNotFoundError
+from booking.domain.ports.availability_cache import AvailabilityCache
 from booking.domain.ports.booking_repository import BookingRepository
 from booking.domain.ports.space_repository import SpaceRepository
 from booking.domain.value_objects.booking_id import BookingId
 from booking.domain.value_objects.time_slot import TimeSlot
+
+_CACHE_TTL_SECONDS = 300  # 5 minutes
 
 
 class GetAvailabilityUseCase:
@@ -12,12 +15,18 @@ class GetAvailabilityUseCase:
         self,
         booking_repository: BookingRepository,
         space_repository: SpaceRepository,
+        cache: AvailabilityCache,
     ) -> None:
         self._booking_repo = booking_repository
         self._space_repo = space_repository
+        self._cache = cache
 
     async def execute(self, dto: GetAvailabilityDTO) -> AvailabilityResponseDTO:
         space_id = BookingId.from_string(dto.space_id)
+
+        cached = await self._cache.get(dto.space_id, dto.start, dto.end)
+        if cached is not None:
+            return cached
 
         space = await self._space_repo.find_by_id(space_id)
         if space is None:
@@ -30,10 +39,16 @@ class GetAvailabilityUseCase:
             time_slot=time_slot,
         )
 
-        return AvailabilityResponseDTO(
+        result = AvailabilityResponseDTO(
             space_id=dto.space_id,
             start=dto.start,
             end=dto.end,
             is_available=len(conflicts) == 0,
             conflicting_slots=[(c.time_slot.start, c.time_slot.end) for c in conflicts],
         )
+
+        await self._cache.set(
+            dto.space_id, dto.start, dto.end, result, _CACHE_TTL_SECONDS
+        )
+
+        return result

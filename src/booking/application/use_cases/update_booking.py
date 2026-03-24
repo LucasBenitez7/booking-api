@@ -10,6 +10,7 @@ from booking.domain.exceptions.booking_errors import (
     UnauthorizedError,
     UserNotFoundError,
 )
+from booking.domain.ports.availability_cache import AvailabilityCache
 from booking.domain.ports.booking_repository import BookingRepository
 from booking.domain.ports.space_repository import SpaceRepository
 from booking.domain.ports.user_repository import UserRepository
@@ -23,10 +24,12 @@ class UpdateBookingUseCase:
         booking_repository: BookingRepository,
         space_repository: SpaceRepository,
         user_repository: UserRepository,
+        availability_cache: AvailabilityCache,
     ) -> None:
         self._booking_repo = booking_repository
         self._space_repo = space_repository
         self._user_repo = user_repository
+        self._cache = availability_cache
 
     async def execute(self, dto: UpdateBookingDTO) -> BookingResponseDTO:
         booking_id = BookingId.from_string(dto.booking_id)
@@ -67,6 +70,7 @@ class UpdateBookingUseCase:
         booking.update_time_slot(new_time_slot=new_time_slot, notes=dto.notes)
 
         await self._booking_repo.update(booking)
+        await self._cache.invalidate(str(booking.space_id))
 
         return BookingResponseDTO(
             id=str(booking.id),

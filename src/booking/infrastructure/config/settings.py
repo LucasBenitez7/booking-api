@@ -23,6 +23,13 @@ class Settings(BaseSettings):
     database_max_overflow: int = Field(20, alias="DATABASE_MAX_OVERFLOW")
 
     redis_url: str | None = Field(None, alias="REDIS_URL")
+    celery_broker_url: str = Field(
+        "redis://localhost:6379/0", alias="CELERY_BROKER_URL"
+    )
+    celery_result_backend: str = Field(
+        "redis://localhost:6379/1", alias="CELERY_RESULT_BACKEND"
+    )
+    reminder_hours_before: int = Field(24, alias="REMINDER_HOURS_BEFORE")
 
     jwt_secret_key: str = Field(..., alias="JWT_SECRET_KEY")
     jwt_algorithm: str = Field("HS256", alias="JWT_ALGORITHM")

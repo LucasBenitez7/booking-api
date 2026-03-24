@@ -5,6 +5,7 @@ import pytest
 from booking.domain.entities.booking import Booking
 from booking.domain.events.booking_cancelled import BookingCancelled
 from booking.domain.events.booking_created import BookingCreated
+from booking.domain.events.booking_expired import BookingExpired
 from booking.domain.events.booking_updated import BookingUpdated
 from booking.domain.exceptions.booking_errors import UnauthorizedError
 from booking.domain.value_objects.booking_id import BookingId
@@ -142,3 +143,44 @@ def test_update_cancelled_booking_raises() -> None:
     new_slot = TimeSlot(start=FUTURE_START_2, end=FUTURE_END_2)
     with pytest.raises(ValueError, match="Cannot update booking"):
         booking.update_time_slot(new_slot)
+
+
+# --- expire() ---
+
+
+def test_expire_booking_changes_status() -> None:
+    booking = make_booking()
+    booking.expire()
+    assert booking.status == BookingStatus.EXPIRED
+
+
+def test_expire_emits_expired_event() -> None:
+    booking = make_booking()
+    booking.pull_events()  # discard BookingCreated
+    booking.expire()
+    events = booking.pull_events()
+    assert len(events) == 1
+    assert isinstance(events[0], BookingExpired)
+
+
+def test_expire_already_cancelled_raises() -> None:
+    user_id = BookingId.generate()
+    booking = make_booking(user_id=user_id)
+    booking.cancel(cancelled_by=user_id)
+    with pytest.raises(ValueError, match="Cannot expire booking"):
+        booking.expire()
+
+
+def test_expire_already_expired_raises() -> None:
+    booking = make_booking()
+    booking.expire()
+    with pytest.raises(ValueError, match="Cannot expire booking"):
+        booking.expire()
+
+
+def test_cancel_expired_booking_raises() -> None:
+    user_id = BookingId.generate()
+    booking = make_booking(user_id=user_id)
+    booking.expire()
+    with pytest.raises(ValueError, match="Cannot cancel booking"):
+        booking.cancel(cancelled_by=user_id)

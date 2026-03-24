@@ -18,6 +18,7 @@ from booking.api.routers import auth as auth_router
 from booking.api.routers import bookings as bookings_router
 from booking.api.routers import health as health_router
 from booking.api.routers import spaces as spaces_router
+from booking.domain.ports.availability_cache import AvailabilityCache
 from booking.domain.ports.password_reset_token_store import PasswordResetTokenStore
 from booking.infrastructure.auth.memory_password_reset_store import (
     MemoryPasswordResetStore,
@@ -25,6 +26,10 @@ from booking.infrastructure.auth.memory_password_reset_store import (
 from booking.infrastructure.auth.redis_password_reset_store import (
     RedisPasswordResetStore,
 )
+from booking.infrastructure.cache.memory_availability_cache import (
+    MemoryAvailabilityCache,
+)
+from booking.infrastructure.cache.redis_availability_cache import RedisAvailabilityCache
 from booking.infrastructure.config.settings import get_settings
 from booking.infrastructure.notifications.logging_notification_service import (
     LoggingNotificationService,
@@ -71,6 +76,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     notification_service = LoggingNotificationService()
 
     reset_store: PasswordResetTokenStore
+    availability_cache: AvailabilityCache
     redis_client: redis.Redis | None = None
     if settings.redis_url:
         redis_client = cast(
@@ -82,14 +88,17 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
             ),
         )
         reset_store = RedisPasswordResetStore(redis_client)
+        availability_cache = RedisAvailabilityCache(redis_client)
     else:
         reset_store = MemoryPasswordResetStore()
+        availability_cache = MemoryAvailabilityCache()
 
     app.state.settings = settings
     app.state.jwt_service = jwt_service
     app.state.password_hasher = password_hasher
     app.state.password_reset_store = reset_store
     app.state.notification_service = notification_service
+    app.state.availability_cache = availability_cache
     app.state.redis = redis_client
 
     yield

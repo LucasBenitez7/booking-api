@@ -3,11 +3,14 @@ from datetime import UTC, datetime
 
 from booking.domain.events.booking_cancelled import BookingCancelled
 from booking.domain.events.booking_created import BookingCreated
+from booking.domain.events.booking_expired import BookingExpired
 from booking.domain.events.booking_updated import BookingUpdated
 from booking.domain.exceptions.booking_errors import UnauthorizedError
 from booking.domain.value_objects.booking_id import BookingId
 from booking.domain.value_objects.booking_status import BookingStatus
 from booking.domain.value_objects.time_slot import TimeSlot
+
+DomainEvent = BookingCreated | BookingCancelled | BookingUpdated | BookingExpired
 
 
 @dataclass
@@ -20,9 +23,7 @@ class Booking:
     notes: str | None = None
     created_at: datetime = field(default_factory=lambda: datetime.now(tz=UTC))
     updated_at: datetime = field(default_factory=lambda: datetime.now(tz=UTC))
-    _events: list[BookingCreated | BookingCancelled | BookingUpdated] = field(
-        default_factory=list, repr=False
-    )
+    _events: list[DomainEvent] = field(default_factory=list, repr=False)
 
     @classmethod
     def create(
@@ -100,6 +101,20 @@ class Booking:
             )
         )
 
+    def expire(self) -> None:
+        """Mark booking as expired by the system — end time passed without cancellation."""
+        if not self.status.can_expire():
+            raise ValueError(f"Cannot expire booking with status '{self.status.value}'")
+        self.status = BookingStatus.EXPIRED
+        self.updated_at = datetime.now(tz=UTC)
+        self._events.append(
+            BookingExpired(
+                booking_id=str(self.id),
+                space_id=str(self.space_id),
+                user_id=str(self.user_id),
+            )
+        )
+
     def update_time_slot(
         self, new_time_slot: TimeSlot, notes: str | None = None
     ) -> None:
@@ -119,7 +134,7 @@ class Booking:
             )
         )
 
-    def pull_events(self) -> list[BookingCreated | BookingCancelled | BookingUpdated]:
+    def pull_events(self) -> list[DomainEvent]:
         events = list(self._events)
         self._events.clear()
         return events

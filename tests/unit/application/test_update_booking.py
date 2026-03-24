@@ -57,6 +57,7 @@ def make_use_case(
     booking_repo = AsyncMock()
     space_repo = AsyncMock()
     user_repo = AsyncMock()
+    cache = AsyncMock()
 
     booking_repo.find_by_id.return_value = booking
     user_repo.find_by_id.return_value = user
@@ -74,6 +75,7 @@ def make_use_case(
         booking_repository=booking_repo,
         space_repository=space_repo,
         user_repository=user_repo,
+        availability_cache=cache,
     )
     return use_case, booking_repo, user_repo, space_repo
 
