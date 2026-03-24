@@ -61,7 +61,7 @@ SQLAlchemy models and domain entities are always separate classes connected by m
 
 ## Current status
 
-**Current phase:** 4 — Cache and async workers
+**Current phase:** 5 — Kubernetes deployment
 
 **Completed:**
 - Phase 0 — uv init, pyproject.toml, folder structure,
@@ -120,19 +120,25 @@ SQLAlchemy models and domain entities are always separate classes connected by m
   - `MemoryAvailabilityCache` fallback when Redis not configured (respects TTL via `time.monotonic`)
   - Tests: 76 passing — Ruff clean — mypy strict clean
 
-**Working on now:** Phase 5 — Kubernetes deployment
+- Phase 5 — Kubernetes deployment:
+  - Namespace manifest (`k8s/namespace.yaml`)
+  - API: Deployment (liveness `/health`, readiness `/health/ready`, zero-downtime RollingUpdate), Service (ClusterIP), HPA (min 2 / max 10, CPU 70% + memory 80%), Ingress (nginx + cert-manager TLS)
+  - Worker: Deployment with `celery worker` command + liveness via `celery inspect ping`
+  - Beat: Deployment with `replicas: 1` + `Recreate` strategy to prevent duplicate scheduled tasks
+  - Redis: Deployment + ClusterIP Service, password from Secret, LRU eviction policy
+  - Secrets: template file only (no real values committed) — injected via CI/CD
+  - NetworkPolicy: API ← ingress-nginx only; worker/beat → redis + postgres only; redis ← api/worker/beat only
+  - `deploy.yml`: build + Trivy CRITICAL scan + push to ECR + `kubectl set image` rolling update for all three deployments; staging on `development` push, production on `main` push
+  - `release.yml`: release-please automatic versioning + CHANGELOG from conventional commits
+  - `security.yml`: added Trivy container scan job uploading SARIF to GitHub Security tab
 
-**Pending in Phase 5:**
-- K8s manifests: Deployment, HPA, Service, Ingress, ConfigMap, Secret, NetworkPolicy
-- Liveness/Readiness probes
-- GitHub Actions deploy + Trivy scan + rolling update zero-downtime
-- release-please with release.yml
+**Working on now:** Phase 6 — Polish, documentation and release
 
 **Pending in Phase 6:**
-- Full README with diagrams and ADRs
+- Full README with architecture diagram and ADRs
 - Coverage badge (minimum 80%)
-- Complete .env.example
-- CONTRIBUTING.md
+- Complete `.env.example`
+- `CONTRIBUTING.md` update
 
 **Known decisions / blockers:**
 - SQLAlchemy models and domain entities are always separate — connected via mappers

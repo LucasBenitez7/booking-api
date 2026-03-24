@@ -1,0 +1,60 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: booking-beat
+  namespace: booking
+  labels:
+    app: booking-beat
+    component: beat
+spec:
+  replicas: 1  # MUST be exactly 1 — multiple beat instances would fire duplicate tasks
+  selector:
+    matchLabels:
+      app: booking-beat
+  strategy:
+    type: Recreate  # Recreate (not RollingUpdate) to guarantee only one instance at a time
+  template:
+    metadata:
+      labels:
+        app: booking-beat
+        component: beat
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001
+        runAsGroup: 1001
+      containers:
+        - name: beat
+          image: YOUR_ECR_REGISTRY/booking-api:latest  # replaced by deploy workflow
+          imagePullPolicy: Always
+          command:
+            - celery
+            - -A
+            - booking.infrastructure.workers.celery_app.celery_app
+            - beat
+            - --loglevel=info
+            - --schedule=/tmp/celerybeat-schedule
+          envFrom:
+            - configMapRef:
+                name: booking-api-config
+            - secretRef:
+                name: booking-api-secrets
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "128Mi"
+            limits:
+              cpu: "200m"
+              memory: "256Mi"
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp  # celerybeat-schedule file is written here
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+      volumes:
+        - name: tmp
+          emptyDir: {}
+      restartPolicy: Always

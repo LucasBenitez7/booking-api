@@ -83,3 +83,21 @@ tests/unit/domain/, tests/unit/application/, tests/integration/
 # Dependencies and imports
 - Use absolute imports always: `from booking.domain.entities.booking import Booking`
 - Never use relative imports (no `from ..entities import ...`)
+
+# Agent autonomy
+The agent may run the following commands without asking for permission:
+- uv run pytest
+- uv run ruff check .
+- uv run mypy src
+- uv run ruff format .
+- Read any file in the project (cat, view, read)
+- List directory structure (ls, tree, dir)
+- Search within files (grep, find)
+- Check git status and git log (read-only git operations)
+
+The agent must always ask for permission before:
+- git commit
+- git push
+- Opening or modifying a PR
+- Deleting files
+- Any destructive operation (drop table, delete files, etc.)
