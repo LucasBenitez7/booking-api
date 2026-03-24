@@ -41,10 +41,11 @@ def test_timezone_aware_required_on_end() -> None:
         TimeSlot(start=FUTURE, end=naive_end)
 
 
-def test_past_start_raises() -> None:
-    past = datetime(2000, 1, 1, 10, 0, tzinfo=UTC)
-    with pytest.raises(ValueError, match="cannot start in the past"):
-        TimeSlot(start=past, end=FUTURE_END)
+def test_past_start_is_valid() -> None:
+    past_start = datetime(2000, 1, 1, 10, 0, tzinfo=UTC)
+    past_end = datetime(2000, 1, 1, 11, 0, tzinfo=UTC)
+    slot = TimeSlot(start=past_start, end=past_end)
+    assert slot.start == past_start
 
 
 def test_overlaps_true() -> None:

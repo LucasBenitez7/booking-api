@@ -10,6 +10,7 @@ from booking.domain.entities.space import Space
 from booking.domain.entities.user import User
 from booking.domain.exceptions.booking_errors import (
     BookingConflictError,
+    InvalidTimeSlotError,
     SpaceNotFoundError,
     UserNotFoundError,
 )
@@ -158,4 +159,21 @@ async def test_create_booking_inactive_space_raises() -> None:
     )
 
     with pytest.raises(SpaceNotFoundError):
+        await use_case.execute(dto)
+
+
+@pytest.mark.asyncio
+async def test_create_booking_past_start_raises() -> None:
+    past_start = datetime(2000, 1, 1, 10, 0, tzinfo=UTC)
+    past_end = datetime(2000, 1, 1, 11, 0, tzinfo=UTC)
+    use_case, _, _, _, _ = make_use_case()
+
+    dto = CreateBookingDTO(
+        space_id=str(BookingId.generate()),
+        user_id=str(BookingId.generate()),
+        start=past_start,
+        end=past_end,
+    )
+
+    with pytest.raises(InvalidTimeSlotError):
         await use_case.execute(dto)

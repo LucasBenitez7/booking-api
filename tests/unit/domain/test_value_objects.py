@@ -25,7 +25,7 @@ def test_booking_id_invalid_string_raises() -> None:
 def test_booking_id_is_immutable() -> None:
     bid = BookingId.generate()
     with pytest.raises(AttributeError):
-        bid.value = None  # type: ignore[misc]
+        bid.value = None  # type: ignore[misc, assignment]
 
 
 def test_email_valid() -> None:

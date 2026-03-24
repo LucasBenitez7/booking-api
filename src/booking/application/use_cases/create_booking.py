@@ -1,8 +1,11 @@
+from datetime import UTC, datetime
+
 from booking.application.dtos.booking_dtos import CreateBookingDTO
 from booking.application.dtos.booking_response_dto import BookingResponseDTO
 from booking.domain.entities.booking import Booking
 from booking.domain.exceptions.booking_errors import (
     BookingConflictError,
+    InvalidTimeSlotError,
     SpaceNotFoundError,
     UserNotFoundError,
 )
@@ -41,6 +44,9 @@ class CreateBookingUseCase:
         user = await self._user_repo.find_by_id(user_id)
         if user is None:
             raise UserNotFoundError(dto.user_id)
+
+        if dto.start < datetime.now(tz=UTC):
+            raise InvalidTimeSlotError("Booking cannot start in the past")
 
         time_slot = TimeSlot(start=dto.start, end=dto.end)
 
