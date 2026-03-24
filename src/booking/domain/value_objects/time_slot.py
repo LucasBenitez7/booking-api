@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from datetime import UTC, datetime
+from datetime import datetime
 
 
 @dataclass(frozen=True)
@@ -12,8 +12,6 @@ class TimeSlot:
             raise ValueError("TimeSlot datetimes must be timezone-aware")
         if self.start >= self.end:
             raise ValueError("Start datetime must be before end datetime")
-        if self.start < datetime.now(tz=UTC):
-            raise ValueError("TimeSlot cannot start in the past")
 
     def overlaps(self, other: "TimeSlot") -> bool:
         return self.start < other.end and self.end > other.start

@@ -58,31 +58,36 @@ SQLAlchemy models and domain entities are always separate classes connected by m
 
 ## Current status
 
-**Current phase:** 1 — Domain and application layer
+**Current phase:** 2 — Database infrastructure
+
 **Completed:**
 - Phase 0 — uv init, pyproject.toml, folder structure,
   Dockerfile, docker-compose, GitHub Actions CI, README
-- Value Objects: BookingId, BookingStatus, TimeSlot, Email
-- Domain Events: BookingCreated, BookingCancelled
-- Domain Exceptions: DomainException base, BookingConflictError, 
-  SpaceNotFoundError, UserNotFoundError, BookingNotFoundError,
-  UnauthorizedError, InvalidTimeSlotError, InvalidBookingStatusFilterError
-- Entities: Booking, Space, User
-- Ports: BookingRepository, SpaceRepository, UserRepository, NotificationService
-- DTOs: booking_dtos.py (CreateBookingDTO, CancelBookingDTO, 
-  GetAvailabilityDTO, ListUserBookingsDTO, ConfirmBookingDTO,
-  BookingResponseDTO, AvailabilityResponseDTO)
-- Use Cases: CreateBooking, CancelBooking, GetAvailability, 
-  ListUserBookings, ConfirmBooking
+- Phase 1 — Full domain and application layer:
+  - Value Objects: BookingId, BookingStatus, TimeSlot, Email
+  - Domain Events: BookingCreated, BookingCancelled
+  - Domain Exceptions: DomainException base, BookingConflictError,
+    SpaceNotFoundError, UserNotFoundError, BookingNotFoundError,
+    UnauthorizedError, InvalidTimeSlotError, InvalidBookingStatusFilterError
+  - Entities: Booking, Space, User
+  - Ports: BookingRepository, SpaceRepository, UserRepository, NotificationService
+  - DTOs: booking_dtos.py, booking_response_dto.py
+  - Use Cases: CreateBooking, CancelBooking, GetAvailability,
+    ListUserBookings, ConfirmBooking
+  - API: exception_handlers.py (domain → HTTP status codes)
+  - 43 unit tests passing — 81% coverage
 
-**Working on now:** —
+**Working on now:** Fase 2 — Database infrastructure
+
 **Pending in this phase:**
-- Entities: Booking, Space, User
-- Value Objects: TimeSlot, BookingStatus, Email, BookingId
-- Domain Events: BookingCreated, BookingCancelled
-- Domain Exceptions: BookingConflictError, SpaceNotFoundError
-- Ports: BookingRepository, SpaceRepository, NotificationService
-- Use Cases: CreateBooking, CancelBooking, GetAvailability, ListUserBookings
-- Tests unitarios de todo lo anterior
+- SQLAlchemy models: BookingModel, SpaceModel, UserModel
+- Mappers: BookingMapper, SpaceMapper, UserMapper
+- Repositories: SQLAlchemyBookingRepository, SQLAlchemySpaceRepository, SQLAlchemyUserRepository
+- Alembic: config + first migration (users, spaces, bookings tables)
+- Async database session with connection pooling
+- Seed script with demo data
+- Integration tests against real PostgreSQL
 
-**Known decisions / blockers:** none yet
+**Known decisions / blockers:**
+- SQLAlchemy models and domain entities are always separate — connected via mappers
+- Use asyncpg driver (postgresql+asyncpg://)
