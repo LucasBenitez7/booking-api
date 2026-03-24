@@ -104,9 +104,7 @@ class Booking:
         self, new_time_slot: TimeSlot, notes: str | None = None
     ) -> None:
         if not self.is_modifiable():
-            raise ValueError(
-                f"Cannot update booking with status '{self.status.value}'"
-            )
+            raise ValueError(f"Cannot update booking with status '{self.status.value}'")
         self.time_slot = new_time_slot
         if notes is not None:
             self.notes = notes

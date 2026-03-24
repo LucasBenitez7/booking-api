@@ -110,7 +110,9 @@ async def test_cancel_booking_deadline_exceeded_raises() -> None:
         id=BookingId.generate(),
         space_id=space_id,
         user_id=user.id,
-        time_slot=TimeSlot(start=near_start, end=datetime(2020, 1, 1, 11, 0, tzinfo=UTC)),
+        time_slot=TimeSlot(
+            start=near_start, end=datetime(2020, 1, 1, 11, 0, tzinfo=UTC)
+        ),
         status=BookingStatus.CONFIRMED,
         notes=None,
         created_at=near_start,
@@ -137,7 +139,9 @@ async def test_admin_can_cancel_past_deadline() -> None:
         id=BookingId.generate(),
         space_id=space_id,
         user_id=BookingId.generate(),
-        time_slot=TimeSlot(start=near_start, end=datetime(2020, 1, 1, 11, 0, tzinfo=UTC)),
+        time_slot=TimeSlot(
+            start=near_start, end=datetime(2020, 1, 1, 11, 0, tzinfo=UTC)
+        ),
         status=BookingStatus.CONFIRMED,
         notes=None,
         created_at=near_start,

@@ -8,7 +8,9 @@ import time
 
 class MemoryPasswordResetStore:
     def __init__(self) -> None:
-        self._tokens: dict[str, tuple[str, float]] = {}  # token -> (user_id, expires_at)
+        self._tokens: dict[
+            str, tuple[str, float]
+        ] = {}  # token -> (user_id, expires_at)
 
     async def store(self, token: str, user_id: str, ttl_seconds: int) -> None:
         self._tokens[token] = (user_id, time.monotonic() + ttl_seconds)

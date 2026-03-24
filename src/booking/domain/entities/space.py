@@ -63,7 +63,9 @@ class Space:
             raise InvalidTimeSlotError(
                 f"Booking starts before space opens at {self.opening_time}"
             )
-        closing_dt = datetime.combine(slot_date, self.closing_time, tzinfo=time_slot.start.tzinfo)
+        closing_dt = datetime.combine(
+            slot_date, self.closing_time, tzinfo=time_slot.start.tzinfo
+        )
         if time_slot.end > closing_dt:
             raise InvalidTimeSlotError(
                 f"Booking ends after space closes at {self.closing_time}"

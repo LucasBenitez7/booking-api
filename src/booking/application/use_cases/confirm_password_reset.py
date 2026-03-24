@@ -31,5 +31,7 @@ class ConfirmPasswordResetUseCase:
         user = await self._user_repo.find_by_id(user_id)
         if user is None:
             raise InvalidPasswordResetTokenError()
-        user.hashed_password = await self._password_hasher.hash_password(dto.new_password)
+        user.hashed_password = await self._password_hasher.hash_password(
+            dto.new_password
+        )
         await self._user_repo.update(user)

@@ -95,7 +95,7 @@ async def register(
             is_admin=user.is_admin,
         ),
         access_token=access,
-        token_type="bearer",
+        token_type="bearer",  # nosec B106 — OAuth2 token type label, not a password
     )
 
 
