@@ -7,7 +7,8 @@ WORKDIR /app
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 
 # Copy dependency files (README.md required by hatchling to build the package)
-COPY pyproject.toml uv.lock README.md ./
+COPY pyproject.toml uv.lock README.md alembic.ini ./
+COPY alembic/ ./alembic/
 
 # Install dependencies (no dev dependencies)
 RUN uv sync --frozen --no-dev --no-install-project
@@ -27,9 +28,11 @@ WORKDIR /app
 RUN groupadd --gid 1001 appgroup && \
     useradd --uid 1001 --gid appgroup --shell /bin/bash --create-home appuser
 
-# Copy virtual environment and source from builder
+# Copy virtual environment, source and migrations from builder
 COPY --from=builder /app/.venv /app/.venv
 COPY --from=builder /app/src /app/src
+COPY --from=builder /app/alembic /app/alembic
+COPY --from=builder /app/alembic.ini /app/alembic.ini
 
 # Set environment variables
 ENV PATH="/app/.venv/bin:$PATH" \
