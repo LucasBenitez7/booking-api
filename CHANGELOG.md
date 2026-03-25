@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.1.1](https://github.com/LucasBenitez7/booking-api/compare/v0.1.0...v0.1.1) (2026-03-25)
+
+
+### Bug Fixes
+
+* copy alembic.ini and alembic/ into Docker image for migrations ([118d33e](https://github.com/LucasBenitez7/booking-api/commit/118d33e3c792b74b652cceefb92563d7b1ab4c42))
+* copy alembic.ini and alembic/ into Docker image for migrations ([49f5e0d](https://github.com/LucasBenitez7/booking-api/commit/49f5e0d61ce60bfb69f4bfc77061ed2033e8d2f3))
+* correct migration and normalize DATABASE_URL driver prefix for Railway ([437c785](https://github.com/LucasBenitez7/booking-api/commit/437c7853b89f1da11c76425044fef30e25ca8db2))
+* correct migration dbd0dc11056d and normalize DATABASE_URL for Railway ([0961c46](https://github.com/LucasBenitez7/booking-api/commit/0961c46ef4db003d07f51256a632bc742704ef0d))
+* upgrade requests to 2.33.0 (CVE-2026-25645) ([68b80ab](https://github.com/LucasBenitez7/booking-api/commit/68b80ab293b754c5bc7c770e1c1b26a7bd755f6b))
+* upgrade requests to 2.33.0 to resolve CVE-2026-25645 ([cd17b5f](https://github.com/LucasBenitez7/booking-api/commit/cd17b5f5cb79f4502ad008fc0cd8b6f5299a8f4f))
+
+
+### Documentation
+
+* add live API section with demo credentials and Swagger guide ([8eb2543](https://github.com/LucasBenitez7/booking-api/commit/8eb2543324dcf96e0f1657a61035928e0fd03e52))
+* add live API URL, demo credentials and Swagger exploration guide ([a513973](https://github.com/LucasBenitez7/booking-api/commit/a5139732cc4689916490170d6345b1a2bbb1df56))
+
 ## 0.1.0 (2026-03-25)
 
 
