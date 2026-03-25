@@ -52,6 +52,14 @@ class Settings(BaseSettings):
         alias="ALLOWED_ORIGINS",
     )
 
+    @field_validator("database_url", mode="before")
+    @classmethod
+    def ensure_asyncpg_driver(cls, v: str) -> str:
+        # Railway (and most providers) give postgresql:// — SQLAlchemy async requires +asyncpg
+        if isinstance(v, str) and v.startswith("postgresql://"):
+            return v.replace("postgresql://", "postgresql+asyncpg://", 1)
+        return v
+
     @field_validator("allowed_origins", mode="before")
     @classmethod
     def split_origins(cls, v: str | list[str]) -> str:
