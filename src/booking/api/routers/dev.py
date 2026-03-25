@@ -20,9 +20,9 @@ from booking.infrastructure.security.jwt_service import JwtService
 router = APIRouter(prefix="/dev", tags=["dev"])
 
 _ADMIN_EMAIL = "admin@booking-api.com"
-_ADMIN_PASSWORD = "Admin1234!"
+_ADMIN_PASSWORD = "Admin1234!"  # nosec B105 — fixed demo credential, not a real secret
 _USER_EMAIL = "user@booking-api.com"
-_USER_PASSWORD = "User1234!"
+_USER_PASSWORD = "User1234!"  # nosec B105 — fixed demo credential, not a real secret
 
 
 @router.post("/seed", summary="Create demo admin + regular user + 3 spaces")
@@ -143,7 +143,7 @@ async def seed(
         "user_email": _USER_EMAIL,
         "user_password": _USER_PASSWORD,
         "access_token": access_token,
-        "token_type": "bearer",
+        "token_type": "bearer",  # nosec B105 — OAuth2 token type string, not a password
     }
 
 
