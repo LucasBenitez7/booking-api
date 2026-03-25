@@ -146,7 +146,7 @@ graph TD
 | Method | Endpoint | Description |
 |---|---|---|
 | `GET` | `/health` | Liveness probe |
-| `GET` | `/health/ready` | Readiness probe (checks DB + Redis) |
+| `GET` | `/health/ready` | Readiness probe (checks database connectivity) |
 
 ---
 
@@ -168,7 +168,7 @@ cd booking-api
 cp .env.example .env
 
 # Start services (PostgreSQL + Redis) and the API
-docker-compose up
+docker compose up
 ```
 
 The API is available at `http://localhost:8000`  
@@ -188,6 +188,32 @@ uv run uvicorn booking.api.main:app --reload
 
 ```bash
 uv run alembic upgrade head
+```
+
+### Postman (explore the API)
+
+1. Import `postman/environment.json`, then `postman/collection.json`, into Postman.
+2. Select the environment **BookingAPI — Local** (`base_url` defaults to `http://localhost:8000`).
+3. Run **0 — Setup / Reset** — wipes the database for a clean start.
+4. Run **0 — Setup / Seed** — creates an admin user, a regular user, and 3 spaces. Saves `admin_token` automatically.
+5. Run the folders in order: **Health → Auth → Spaces → Bookings → Admin**.
+
+All tokens and IDs are saved automatically by test scripts — no manual steps required.
+
+**Run the entire collection from the terminal (Newman):**
+
+```bash
+npx newman run postman/collection.json -e postman/environment.json
+```
+
+**Email notifications:** this project uses `LoggingNotificationService` — confirmation and reminder emails are printed to stdout (application logs) instead of being sent. Swapping in a real SMTP or SendGrid adapter requires changing only one line in `app_factory.py`; the domain and application layers are unaffected by design.
+
+**Note:** the `/dev/seed` and `/dev/reset` endpoints are only available when `APP_ENV=development`. They do not exist in production.
+
+To regenerate the collection after API changes:
+
+```bash
+uv run python scripts/generate_postman_collection.py
 ```
 
 ---
@@ -212,6 +238,8 @@ uv run pytest tests/integration/
 ## Project Structure
 
 ```
+postman/                    # Postman collection + environment (import into Postman)
+scripts/                    # generate_postman_collection.py · run_newman.py
 src/booking/
 ├── domain/                  # Pure Python — zero external dependencies
 │   ├── entities/            #   Booking, Space, User

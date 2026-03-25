@@ -61,7 +61,7 @@ SQLAlchemy models and domain entities are always separate classes connected by m
 
 ## Current status
 
-**Current phase:** 5 — Kubernetes deployment
+**Current phase:** — complete — all 6 phases shipped
 
 **Completed:**
 - Phase 0 — uv init, pyproject.toml, folder structure,
@@ -134,16 +134,19 @@ SQLAlchemy models and domain entities are always separate classes connected by m
 
 **Working on now:** — all phases complete —
 
-**Pending in Phase 6:**
-- README.md: architecture diagram (Mermaid), stack badges, endpoints summary, local setup guide
-- ADRs (Architecture Decision Records): 3-4 key decisions documented
-- `.env.example`: complete and up to date with all variables
-- Coverage badge in README (pytest-cov now enforces **≥80%** on application + domain + selected infra — see `pyproject.toml` `[tool.coverage.run] omit`)
-- `CONTRIBUTING.md`: update with current workflow (branches, commits, PR process)
-
-**Phase 6 progress — tests:**
-- 124 unit tests: Space entity rules, auth (register/login/refresh), GetBooking, admin spaces, list bookings/spaces, password reset, logging notification adapter
-- Coverage gate: `cov-fail-under=80` with HTTP/DB/Celery/Redis adapters omitted from the metric (those layers are covered by integration tests or staging)
+**Phase 6 — delivered:**
+- README.md: Mermaid architecture diagram, stack table, full endpoint reference, local setup guide, key domain decisions section, honest coverage note
+- `.env.example`: fully synced with `settings.py` — all variables present and commented
+- `CONTRIBUTING.md`: branch strategy, Conventional Commits guide, architecture rules, quick dev reference
+- 124 unit tests — domain, application, selected infra adapters; coverage gate `cov-fail-under=80`; HTTP/DB/Celery/Redis adapters omitted (require integration environment — documented intentionally)
+- Bug fix: `find_conflicts` now excludes EXPIRED bookings in addition to CANCELLED
+- `.gitignore` corrections: typo in secret path fixed, `uv.lock` removed from ignored files
+- `release.yml`: release-please for automated versioning and CHANGELOG on merge to `main`
+- Postman: `postman/collection.json` + `postman/environment.json` — fully automated flow (Reset → Seed → run all folders); `scripts/generate_postman_collection.py` regenerates the collection when routes change; 58/58 Newman assertions passing
+- Dev endpoints: `POST /dev/seed` (creates admin + user + 3 spaces, returns admin token) and `DELETE /dev/reset` (wipes all tables) — only registered when `APP_ENV=development`; default is `production` (safe by default)
+- Bug fix: `get_session()` now commits on success and rolls back on exception — previously all write operations (Register, Create booking, etc.) were silently rolling back because `flush()` alone does not persist
+- Bug fix: replaced `passlib` with `bcrypt` directly in `password_crypto.py` — passlib ≥ 4.x has a compatibility bug with `bcrypt >= 4` that causes `ValueError` on any hash operation
+- `scripts/run_newman.py` + `pyproject.toml` scripts: `uv run test-api` and `uv run test-api-ci` as equivalent to ticketmaster's `npm run test:api`
 
 
 **Known decisions / blockers:**

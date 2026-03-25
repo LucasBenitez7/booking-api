@@ -11,7 +11,7 @@ class Settings(BaseSettings):
         extra="ignore",
     )
 
-    app_env: str = "development"
+    app_env: str = Field("production", alias="APP_ENV")
     app_version: str = "0.1.0"
     debug: bool = False
 

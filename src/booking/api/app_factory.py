@@ -16,6 +16,7 @@ from booking.api.limiter import limiter
 from booking.api.routers import admin as admin_router
 from booking.api.routers import auth as auth_router
 from booking.api.routers import bookings as bookings_router
+from booking.api.routers import dev as dev_router
 from booking.api.routers import health as health_router
 from booking.api.routers import spaces as spaces_router
 from booking.domain.ports.availability_cache import AvailabilityCache
@@ -157,5 +158,8 @@ def create_app() -> FastAPI:
     app.include_router(spaces_router.router)
     app.include_router(bookings_router.router)
     app.include_router(admin_router.router)
+
+    if settings.app_env == "development":
+        app.include_router(dev_router.router)
 
     return app

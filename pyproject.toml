@@ -35,6 +35,12 @@ dev = [
     "pip-audit>=2.7.0",
 ]
 
+[project.scripts]
+# Run with: uv run <script-name>
+# API tests require the API running: docker compose up api
+test-api     = "scripts.run_newman:main"
+test-api-ci  = "scripts.run_newman:ci"
+
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
