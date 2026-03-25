@@ -9,6 +9,12 @@ on:
     - cron: "0 8 * * 1" # Every Monday at 8am
   workflow_dispatch:
 
+# Required for github/codeql-action/upload-sarif (Code scanning / Security tab)
+permissions:
+  contents: read
+  security-events: write
+  actions: read
+
 jobs:
   code-security:
     name: Code Security Audit
