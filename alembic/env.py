@@ -32,6 +32,9 @@ def _get_database_url() -> str:
             "DATABASE_URL environment variable is not set. "
             "Set it in your .env file or CI environment."
         )
+    # Railway (and most providers) give postgresql:// — async engine requires +asyncpg
+    if url.startswith("postgresql://"):
+        url = url.replace("postgresql://", "postgresql+asyncpg://", 1)
     return url
 
 
