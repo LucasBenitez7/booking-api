@@ -2,8 +2,8 @@
 
 > Production-grade REST API for space and room booking management — coworking, meeting rooms, consultation slots.
 
-[![CI](https://github.com/LucasBenitez7/booking-api/actions/workflows/ci.yml/badge.svg)](https://github.com/LucasBenitez7/booking-api/actions/workflows/ci.yml)
-[![Security](https://github.com/LucasBenitez7/booking-api/actions/workflows/security.yml/badge.svg)](https://github.com/LucasBenitez7/booking-api/actions/workflows/security.yml)
+[![CI](https://img.shields.io/github/actions/workflow/status/LucasBenitez7/booking-api/ci.yml?label=CI&logo=github)](https://github.com/LucasBenitez7/booking-api/actions/workflows/ci.yml)
+[![Security](https://img.shields.io/github/actions/workflow/status/LucasBenitez7/booking-api/security.yml?label=Security&logo=github)](https://github.com/LucasBenitez7/booking-api/actions/workflows/security.yml)
 [![Python](https://img.shields.io/badge/python-3.12-blue.svg)](https://www.python.org/downloads/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688.svg)](https://fastapi.tiangolo.com)
 [![Ruff](https://img.shields.io/badge/code%20style-ruff-000000.svg)](https://github.com/astral-sh/ruff)

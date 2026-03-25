@@ -2,9 +2,12 @@ name: Security
 
 on:
   push:
-    branches: [main]
+    branches: [main, development]
+  pull_request:
+    branches: [main, development]
   schedule:
     - cron: "0 8 * * 1" # Every Monday at 8am
+  workflow_dispatch:
 
 jobs:
   code-security:
