@@ -1,0 +1,103 @@
+---
+description: Core rules for BookingAPI — always active in this project
+globs: ["**/*.py", "**/*.toml", "**/*.yml", "**/*.yaml", "Dockerfile"]
+alwaysApply: true
+---
+
+# Project
+This is BookingAPI — a REST API for booking management (coworking spaces, meeting rooms).
+Python 3.12 · FastAPI · PostgreSQL · Redis · Celery · Kubernetes · Hexagonal Architecture.
+Package manager: uv. Linting: Ruff. Type checking: mypy strict.
+
+# Architecture — Hexagonal (Ports & Adapters)
+The dependency rule is absolute: inner layers never import from outer layers.
+
+- domain/        → pure Python, zero external dependencies (no FastAPI, no SQLAlchemy)
+- application/   → orchestrates domain, no HTTP, no DB
+- infrastructure/→ implements domain ports (SQLAlchemy repos, Redis, Celery, email)
+- api/           → HTTP layer only (FastAPI routes, schemas, dependency injection)
+
+If a file in domain/ imports from sqlalchemy or fastapi → that is a bug, flag it immediately.
+If a file in application/ imports from fastapi → that is a bug, flag it immediately.
+
+# Ports and Adapters pattern
+Domain defines contracts via Protocol interfaces in domain/ports/.
+Infrastructure implements those contracts — never the other way around.
+
+```python
+# Correct — domain defines the contract
+class BookingRepository(Protocol):
+    async def save(self, booking: Booking) -> None: ...
+
+# Correct — infrastructure implements it
+class SQLAlchemyBookingRepository:
+    async def save(self, booking: Booking) -> None:
+        ...  # SQLAlchemy implementation here
+```
+
+# Key domain decisions
+- Bookings are created directly as CONFIRMED — no PENDING state ever
+- Business rules live in Space entity: min_duration_minutes, max_duration_minutes,
+  min_advance_minutes, cancellation_deadline_hours, opening_time, closing_time
+- User has max_active_bookings (default 5) — configurable per user by admin
+- Admin can cancel any booking regardless of ownership
+- Domain exceptions extend DomainException base class in domain/exceptions/booking_errors.py
+
+# SQLAlchemy models vs Domain entities
+These are always separate classes connected by mappers in infrastructure/persistence/mappers/.
+Never use SQLAlchemy models directly in domain or application layers.
+
+# Code standards
+- Python 3.12+ syntax always
+- Full type hints on every function and method — no exceptions
+- mypy strict must pass — no `type: ignore` unless absolutely unavoidable and commented why
+- Async all the way: use `async def` for all I/O operations
+- Pydantic v2 for HTTP schemas and settings only — never in domain layer
+- Domain DTOs use plain dataclasses, not Pydantic
+
+# Naming conventions
+- Files and folders: snake_case
+- Classes: PascalCase
+- Functions and variables: snake_case
+- Constants: UPPER_SNAKE_CASE
+- Private attributes: _single_underscore prefix
+
+# Project structure
+Follow the folder structure defined in the project exactly.
+Never create files outside of it without asking first.
+
+src/booking/
+  domain/entities/, domain/value_objects/, domain/events/
+  domain/exceptions/, domain/ports/
+  application/use_cases/, application/dtos/
+  infrastructure/persistence/, infrastructure/cache/
+  infrastructure/workers/, infrastructure/notifications/
+  api/routers/, api/schemas/, api/middleware/
+tests/unit/domain/, tests/unit/application/, tests/integration/
+
+# Error handling
+- Domain exceptions live in domain/exceptions/ and extend a base DomainException
+- Infrastructure exceptions are caught at the API layer and mapped to HTTP responses
+- Never let SQLAlchemy or Redis exceptions bubble up to the domain layer
+
+# Dependencies and imports
+- Use absolute imports always: `from booking.domain.entities.booking import Booking`
+- Never use relative imports (no `from ..entities import ...`)
+
+# Agent autonomy
+The agent may run the following commands without asking for permission:
+- uv run pytest
+- uv run ruff check .
+- uv run mypy src
+- uv run ruff format .
+- Read any file in the project (cat, view, read)
+- List directory structure (ls, tree, dir)
+- Search within files (grep, find)
+- Check git status and git log (read-only git operations)
+
+The agent must always ask for permission before:
+- git commit
+- git push
+- Opening or modifying a PR
+- Deleting files
+- Any destructive operation (drop table, delete files, etc.)

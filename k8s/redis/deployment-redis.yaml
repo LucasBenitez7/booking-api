@@ -1,0 +1,90 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: booking-redis
+  namespace: booking
+  labels:
+    app: booking-redis
+    component: redis
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: booking-redis
+  strategy:
+    type: Recreate  # Redis has persistent state — avoid two instances writing at the same time
+  template:
+    metadata:
+      labels:
+        app: booking-redis
+        component: redis
+    spec:
+      containers:
+        - name: redis
+          image: redis:7-alpine
+          ports:
+            - containerPort: 6379
+              name: redis
+          args:
+            - redis-server
+            - --requirepass
+            - $(REDIS_PASSWORD)
+            - --maxmemory
+            - 256mb
+            - --maxmemory-policy
+            - allkeys-lru
+          env:
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: booking-api-secrets
+                  key: REDIS_PASSWORD
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "128Mi"
+            limits:
+              cpu: "200m"
+              memory: "256Mi"
+          livenessProbe:
+            exec:
+              command:
+                - redis-cli
+                - -a
+                - $(REDIS_PASSWORD)
+                - ping
+            initialDelaySeconds: 10
+            periodSeconds: 30
+            timeoutSeconds: 5
+          readinessProbe:
+            exec:
+              command:
+                - redis-cli
+                - -a
+                - $(REDIS_PASSWORD)
+                - ping
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 3
+          volumeMounts:
+            - name: redis-data
+              mountPath: /data
+      volumes:
+        - name: redis-data
+          emptyDir: {}  # replace with a PersistentVolumeClaim for production durability
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: booking-redis
+  namespace: booking
+  labels:
+    app: booking-redis
+spec:
+  type: ClusterIP
+  selector:
+    app: booking-redis
+  ports:
+    - name: redis
+      port: 6379
+      targetPort: 6379

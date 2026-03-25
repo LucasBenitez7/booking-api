@@ -1,0 +1,111 @@
+[project]
+name = "booking-api"
+version = "0.1.0"
+description = "REST API for space and room booking management"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi[standard]>=0.115.0",
+    "sqlalchemy[asyncio]>=2.0.0",
+    "alembic>=1.13.0",
+    "asyncpg>=0.29.0",
+    "pydantic>=2.0.0",
+    "pydantic-settings>=2.0.0",
+    "redis>=5.0.0",
+    "celery[redis]>=5.3.0",
+    "PyJWT>=2.8.0",
+    "passlib[bcrypt]>=1.7.4",
+    "slowapi>=0.1.9",
+    "structlog>=24.0.0",
+    "python-dotenv>=1.2.2",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.23.0",
+    "pytest-cov>=5.0.0",
+    "pytest-mock>=3.14.0",
+    "httpx>=0.27.0",
+    "factory-boy>=3.3.0",
+    "Faker>=24.0.0",
+    "mypy>=1.9.0",
+    "ruff>=0.4.0",
+    "bandit>=1.7.0",
+    "pip-audit>=2.7.0",
+]
+
+[project.scripts]
+# Run with: uv run <script-name>
+# API tests require the API running: docker compose up api
+test-api     = "scripts.run_newman:main"
+test-api-ci  = "scripts.run_newman:ci"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.ruff]
+target-version = "py312"
+line-length = 88
+
+[tool.ruff.lint]
+select = [
+    "E",  # pycodestyle errors
+    "W",  # pycodestyle warnings
+    "F",  # pyflakes
+    "I",  # isort
+    "B",  # flake8-bugbear
+    "C4", # flake8-comprehensions
+    "UP", # pyupgrade
+]
+ignore = ["E501", "B008", "B904"]
+per-file-ignores = {"alembic/env.py" = ["E402"], "alembic/versions/*.py" = ["E402", "I001", "UP007", "UP035", "W291"]}
+
+[tool.ruff.lint.isort]
+known-first-party = ["booking"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+exclude = ["alembic/", "scripts/"]
+plugins = ["pydantic.mypy"]
+
+[[tool.mypy.overrides]]
+module = ["celery.*", "passlib.*", "slowapi.*", "factory.*", "faker.*"]
+ignore_errors = true
+
+[[tool.mypy.overrides]]
+module = [
+    "booking.infrastructure.workers.celery_app",
+    "booking.infrastructure.workers.beat_schedule",
+    "booking.infrastructure.workers.tasks.booking_tasks",
+]
+ignore_errors = true
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+addopts = "--cov=src/booking --cov-report=term-missing --cov-fail-under=80"
+
+[tool.coverage.run]
+source = ["src"]
+omit = [
+    "*/migrations/*",
+    "*/alembic/*",
+    # HTTP layer — covered by integration / E2E tests, not unit tests
+    "*/booking/api/*",
+    # DB adapters — require a real database session
+    "*/booking/infrastructure/persistence/*",
+    # Celery — exercised in staging / worker process
+    "*/booking/infrastructure/workers/*",
+    # Redis adapter — requires a running Redis (memory cache is unit-tested)
+    "*/booking/infrastructure/cache/redis_availability_cache.py",
+]
+
+[tool.bandit]
+exclude_dirs = ["tests", "alembic"]
+severity = "medium"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/booking"]
