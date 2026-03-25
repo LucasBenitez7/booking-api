@@ -40,6 +40,7 @@ jobs:
         # CVE-2026-4539: ReDoS in pygments AdlLexer (CVSS 3.3 Low, local-only).
         # Ignored because pygments 2.19.3 (the fix) is not yet published on PyPI.
         # Remove this ignore once pygments >= 2.19.3 is available.
+        # CVE-2026-25645 (requests): resolved by upgrading to 2.33.0 in uv.lock.
         run: uv run pip-audit --ignore-vuln CVE-2026-4539
 
   image-security:
