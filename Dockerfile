@@ -40,12 +40,12 @@ ENV PATH="/app/.venv/bin:$PATH" \
 # Switch to non-root user
 USER appuser
 
-# Expose port
+# Expose port (default 8000; Railway overrides via PORT env var)
 EXPOSE 8000
 
-# Health check
+# Health check — uses the same dynamic port as the server
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD python -c "import httpx; httpx.get('http://localhost:8000/health')"
+    CMD python -c "import os, httpx; httpx.get(f'http://localhost:{os.environ.get(\"PORT\", 8000)}/health')"
 
-# Start application
-CMD ["uvicorn", "booking.api.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Start application — PORT is injected by Railway; falls back to 8000 locally
+CMD uvicorn booking.api.main:app --host 0.0.0.0 --port ${PORT:-8000}
