@@ -12,6 +12,36 @@
 
 ---
 
+## 🚀 Live API
+
+**📖 [booking.lsbstack.com/docs](https://booking.lsbstack.com/docs)** — Swagger UI (interactive, try it live)
+
+### How to explore the API
+
+**Option 1 — Admin user (full access)**
+
+1. Open `POST /auth/login` → click **Try it out** → use these credentials:
+
+```json
+{
+  "email": "adminlsb@bookingapi.com",
+  "password": "Admin1234!"
+}
+```
+
+2. Copy the `access_token` from the response
+3. Click **Authorize** (top right) → paste the token → **Authorize**
+4. All endpoints including admin (create spaces, list all bookings, manage users) are now unlocked
+
+**Option 2 — Regular user**
+
+1. Open `POST /auth/register` → click **Try it out** → register with any email and password
+2. Copy the `access_token` from the response
+3. Click **Authorize** → paste the token → **Authorize**
+4. Bookings endpoints are now available
+
+---
+
 ## What this is
 
 BookingAPI is a portfolio project that demonstrates building a **production-grade Python backend** from scratch. It implements:
